@@ -1,0 +1,8 @@
+sudo: required
+services:
+  - docker
+env:
+  - TARGET=zabbix-proxy-sqlite3-alpine
+script:
+  - docker login -u "$DOCKER_USERNAME" -p "$DOCKER_PASSWORD"
+  - ./build.sh "$TARGET" -p
