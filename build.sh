@@ -69,4 +69,9 @@ docker run --rm --privileged multiarch/qemu-user-static:register --reset > /dev/
 docker build -t "$DOCKER_IMAGE" .
 
 # docker login -u "$DOCKER_USERNAME" -p "$DOCKER_PASSWORD"
-# docker push "$DOCKER_IMAGE"
+
+case "$1" in
+    f|force|p|push)
+        docker push "$DOCKER_IMAGE"
+        ;;
+esac
