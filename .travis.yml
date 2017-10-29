@@ -4,6 +4,12 @@ services:
 env:
   - TARGET=agent-alpine
   - TARGET=proxy-sqlite3-alpine
+  - TARGET=server-mysql-alpine
+  - TARGET=server-pgsql-alpine
+  - TARGET=web-apache-mysql-alpine
+  - TARGET=web-apache-pgsql-alpine
+  - TARGET=web-nginx-mysql-alpine
+  - TARGET=web-nginx-pgsql-alpine
 script:
   - docker login -u "$DOCKER_USERNAME" -p "$DOCKER_PASSWORD"
   - ./build.sh "$TARGET" -p
