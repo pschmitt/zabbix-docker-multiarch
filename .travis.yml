@@ -3,6 +3,7 @@ services:
   - docker
 env:
   - TARGET=agent-alpine
+  - TARGET=proxy-mysql-alpine
   - TARGET=proxy-sqlite3-alpine
   - TARGET=server-mysql-alpine
   - TARGET=server-pgsql-alpine
