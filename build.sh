@@ -70,7 +70,7 @@ docker build -t "$DOCKER_IMAGE" .
 
 # docker login -u "$DOCKER_USERNAME" -p "$DOCKER_PASSWORD"
 
-case "$1" in
+case "$2" in
     f|force|p|push)
         docker push "$DOCKER_IMAGE"
         ;;
