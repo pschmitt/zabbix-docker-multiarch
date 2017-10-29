@@ -44,7 +44,7 @@ read -r ORIG_BASE_DOCKER_IMAGE DOCKER_TAG <<< "$(sed -nr 's/FROM (.+):(.+)/\1 \2
 
 case "$ORIG_BASE_DOCKER_IMAGE" in
     alpine)
-        BASE_DOCKER_IMAGE='resin\/raspberrypi3-alpine'
+        BASE_DOCKER_IMAGE='resin\/raspberry-pi-alpine'
         ;;
     ubuntu)
         BASE_DOCKER_IMAGE='arm32v7\/ubuntu'
