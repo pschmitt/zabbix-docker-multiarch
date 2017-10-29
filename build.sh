@@ -63,8 +63,12 @@ sed -i 's/FROM .*/FROM '"${BASE_DOCKER_IMAGE}"':'"${DOCKER_TAG}"'/' Dockerfile
 DOCKER_IMAGE="pschmitt/zabbix-${PROJECT}-${OS}-armhf"
 echo "Building $DOCKER_IMAGE"
 
-echo "Setting up arm compatibility"
-docker run --rm --privileged multiarch/qemu-user-static:register --reset > /dev/null
+case $(uname -m) in
+    x86_64|i386)
+        echo "Setting up ARM compatibility"
+        docker run --rm --privileged multiarch/qemu-user-static:register --reset > /dev/null
+        ;;
+esac
 
 docker build -t "$DOCKER_IMAGE" .
 
