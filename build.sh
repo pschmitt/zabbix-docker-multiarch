@@ -67,7 +67,7 @@ else
   DOCKER_TAG="$GITREF"
 fi
 
-DOCKER_IMAGE="pschmitt/zabbix-${PROJECT}-${OS}-armhf:native-${DOCKER_TAG}"
+DOCKER_IMAGE="pschmitt/zabbix-${PROJECT}-${OS}:${DOCKER_TAG}"
 echo "Building $DOCKER_IMAGE"
 
 case "$(uname -m)" in
