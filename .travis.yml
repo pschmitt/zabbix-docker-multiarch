@@ -2,17 +2,8 @@ language: minimal
 sudo: required
 services:
   - docker
-env:
-  - TARGET=agent-alpine
-  - TARGET=proxy-mysql-alpine
-  - TARGET=proxy-sqlite3-alpine
-  - TARGET=server-mysql-alpine
-  - TARGET=server-pgsql-alpine
-  - TARGET=web-apache-mysql-alpine
-  - TARGET=web-apache-pgsql-alpine
-  - TARGET=web-nginx-mysql-alpine
-  - TARGET=web-nginx-pgsql-alpine
 script:
+  - echo '{"experimental":true}' | sudo tee /etc/docker/daemon.json
+  - sudo service docker restart
   - docker login -u "$DOCKER_USERNAME" -p "$DOCKER_PASSWORD"
-  - ./build.sh "$TARGET" -p
-  - ./build-all-tags.sh "$TARGET" 5
+  - ./build.sh "$TARGET" "$GIT_TAG" -p
