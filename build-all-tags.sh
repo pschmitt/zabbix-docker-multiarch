@@ -9,7 +9,8 @@ usage() {
 list_remote_tags() {
   git ls-remote --tags "$1" | \
     awk '{print $2}' | \
-    sed 's|refs/tags/||'
+    sed 's|refs/tags/||' | \
+    sort -r
 }
 
 if [[ "$#" -lt 1 ]]
