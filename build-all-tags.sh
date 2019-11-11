@@ -26,7 +26,33 @@ case "$1" in
     ;;
 esac
 
+SUCCESSFUL_BUILDS=()
+FAILED_BUILDS=()
+
 for git_tag in $(list_remote_tags https://github.com/zabbix/zabbix-docker)
 do
-  ./build.sh "$1" "$git_tag" -p
+  if ./build.sh "$1" "$git_tag" -p
+  then
+    SUCCESSFUL_BUILDS+=("$git_tag")
+  else
+    FAILED_BUILDS+=("$git_tag")
+  fi
 done
+
+if [[ "${#SUCCESSFUL_BUILDS[@]}" -ne 0 ]]
+then
+  echo "Successful builds:"
+  for build in "${SUCCESSFUL_BUILDS[@]}"
+  do
+    echo "  - $build ✔️"
+  done
+fi
+
+if [[ "${#FAILED_BUILDS[@]}" -ne 0 ]]
+then
+  echo "Failed builds:"
+  for build in "${FAILED_BUILDS[@]}"
+  do
+    echo "  - $build ❌"
+  done
+fi
