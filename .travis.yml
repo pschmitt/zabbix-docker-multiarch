@@ -13,4 +13,5 @@ env:
   - TARGET=web-nginx-pgsql-alpine
 script:
   - docker login -u "$DOCKER_USERNAME" -p "$DOCKER_PASSWORD"
-  - ./build.sh "$TARGET" -p
+  - ./build-all-tags.sh "$TARGET"
+  # - ./build.sh "$TARGET" -p
