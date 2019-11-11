@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-set -e
+set -ex
 
 cd "$(readlink -f "$(dirname "$0")")" || exit 9
 
