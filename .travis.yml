@@ -15,4 +15,4 @@ env:
 script:
   - docker login -u "$DOCKER_USERNAME" -p "$DOCKER_PASSWORD"
   - ./build.sh "$TARGET" -p
-  - ./build-all-tags.sh "$TARGET"
+  - ./build-all-tags.sh "$TARGET" 5

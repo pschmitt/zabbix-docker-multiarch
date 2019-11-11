@@ -3,7 +3,7 @@
 cd "$(readlink -f "$(dirname "$0")")" || exit 9
 
 usage() {
-  echo "Usage: $(basename "$0") TARGET"
+  echo "Usage: $(basename "$0") TARGET [MAX_TAGS]"
 }
 
 list_remote_tags() {
@@ -26,10 +26,19 @@ case "$1" in
     ;;
 esac
 
+MAX_TAGS="$2"
+
 SUCCESSFUL_BUILDS=()
 FAILED_BUILDS=()
 
-for git_tag in $(list_remote_tags https://github.com/zabbix/zabbix-docker)
+GIT_TAGS=$(list_remote_tags https://github.com/zabbix/zabbix-docker)
+
+if [[ -n "$MAX_TAGS" ]]
+then
+  GIT_TAGS="$(head -n "$MAX_TAGS" <<< "$GIT_TAGS")"
+fi
+
+for git_tag in $GIT_TAGS
 do
   if ./build.sh "$1" "$git_tag" -p
   then
