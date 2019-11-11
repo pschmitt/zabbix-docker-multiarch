@@ -64,11 +64,10 @@ read -r ORIG_BASE_DOCKER_IMAGE DOCKER_TAG <<< "$(sed -nr 's/FROM (.+):(.+)/\1 \2
 
 case "$ORIG_BASE_DOCKER_IMAGE" in
     alpine)
-        BASE_DOCKER_IMAGE='balenalib\/raspberry-pi-alpine'
+        BASE_DOCKER_IMAGE='balenalib\/generic-armv7ahf-alpine'
         ;;
     ubuntu)
-        BASE_DOCKER_IMAGE='arm32v7\/ubuntu'
-        # BASE_DOCKER_IMAGE='resin\/rpi-raspbian'
+        BASE_DOCKER_IMAGE='balenalib\/generic-armv7ahf-ubuntu'
         ;;
     *)
         echo "Unable to find a suitable replacement for $BASE_DOCKER_IMAGE" >&2
