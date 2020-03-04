@@ -15,4 +15,4 @@ jobs:
       - name: Start Travis CI build of zabbix-docker-armhf
         env:
           TRAVIS_TOKEN: ${{ secrets.TRAVIS_TOKEN }}
-        run: ./build-zabbix-arm.sh
+        run: ./travis-build.sh
