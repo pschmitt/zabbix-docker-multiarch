@@ -26,15 +26,12 @@ travis_build() {
   local git_tag
   local jobs_def=""
   local tmp
+  local tags_limit="${1:-1}"
 
   git_tags=$(list_remote_tags https://github.com/zabbix/zabbix-docker)
-  if [[ -n "$1" ]]
-  then
-    git_tags=$(head -n "$1" <<< "$git_tags")
-  fi
 
-  # Limit to the last 3 tags
-  git_tags=$(head -n 3 <<< "$git_tags" 2>/dev/null)
+  # Limit to latest X tags
+  git_tags=$(head -n "$tags_limit" <<< "$git_tags")
 
   for target in $(list_targets)
   do
