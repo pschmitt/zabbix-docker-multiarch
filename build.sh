@@ -139,7 +139,7 @@ array_join() {
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]
 then
-  set -ex
+  set -x
 
   cd "$(readlink -f "$(dirname "$0")")" || exit 9
 
