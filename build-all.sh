@@ -16,6 +16,6 @@ then
   for target in $(list_targets)
   do
     echo "# BUILD $target"
-    ./build.sh "$target"
+    ./build.sh "$target" -p
   done
 fi
