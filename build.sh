@@ -187,7 +187,7 @@ then
   fi
 
   read -r FROM_IMAGE FROM_TAG <<< \
-    "$(sed -nr 's/FROM\s+([^:]+):?([^\s]+)?/\1 \2/p' Dockerfile | head -1)"
+    "$(sed -nr 's/FROM\s+([^:]+):?([^\s]*)?(as .*)?/\1 \2/p' Dockerfile | head -1)"
   if ! grep -q / <<< "$FROM_IMAGE"
   then
     # Prepend default namespace
