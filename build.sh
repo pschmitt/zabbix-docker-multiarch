@@ -145,6 +145,7 @@ then
 
   # buildx setup
   export DOCKER_CLI_EXPERIMENTAL=enabled
+  export PATH="$PATH:~/.docker/cli-plugins"
   if ! [[ -x ~/.docker/cli-plugins/docker-buildx ]]
   then
     install_latest_buildx
