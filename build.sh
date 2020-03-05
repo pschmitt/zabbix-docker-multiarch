@@ -203,12 +203,15 @@ then
     TAG_ARGS+=("--tag $img")
   done
 
-  case "$(uname -m)" in
-    x86_64|i386)
-      echo "Setting up ARM compatibility"
-      docker run --rm --privileged docker/binfmt:a7996909642ee92942dcd6cff44b9b95f08dad64
-      ;;
-  esac
+  if [[ -z "$GITHUB_RUN_ID" ]]
+  then
+    case "$(uname -m)" in
+      x86_64|i386)
+          echo "Setting up ARM compatibility"
+          docker run --rm --privileged docker/binfmt:a7996909642ee92942dcd6cff44b9b95f08dad64
+        ;;
+    esac
+  fi
 
   # buildx setup
   export DOCKER_CLI_EXPERIMENTAL=enabled
