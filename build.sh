@@ -50,9 +50,12 @@ setup_buildx() {
   if [[ -n "$GITHUB_RUN_ID" ]]
   then
     docker run --rm --privileged multiarch/qemu-user-static --reset -p yes
-    docker buildx create --name builder --driver docker-container --use
+    docker buildx create --use --name builder --node builder --driver docker-container
     docker buildx inspect --bootstrap
     docker buildx inspect
+  elif [[ "$TRAVIS" == "true" ]]
+  then
+    docker buildx create --use --name builder --node builder --driver-opt network=host
   else
     # Not GitHub Actions
     case "$(uname -m)" in
@@ -62,6 +65,10 @@ setup_buildx() {
         ;;
     esac
   fi
+  # Debug info for buildx and multiarch support
+  docker buildx ls
+  docker buildx inspect --bootstrap
+  ls -1 /proc/sys/fs/binfmt_misc
 }
 
 get_available_architectures() {
@@ -135,6 +142,16 @@ then
   set -ex
 
   cd "$(readlink -f "$(dirname "$0")")" || exit 9
+
+  # buildx setup
+  export DOCKER_CLI_EXPERIMENTAL=enabled
+  install_latest_buildx
+  setup_buildx
+  if ! docker buildx version
+  then
+    echo "buildx is not available" >&2
+    exit 99
+  fi
 
   if [[ "$#" -lt 1 ]]
   then
@@ -222,26 +239,6 @@ then
   do
     TAG_ARGS+=("--tag $img")
   done
-
-  # buildx setup
-  export DOCKER_CLI_EXPERIMENTAL=enabled
-  install_latest_buildx
-  setup_buildx
-  if ! docker buildx version
-  then
-    echo "buildx is not available" >&2
-    exit 99
-  fi
-
-  if [[ "$TRAVIS" == "true" ]]
-  then
-    docker buildx create --use --name build --node build --driver-opt network=host
-  fi
-
-  # Debug info for buildx and multiarch support
-  docker buildx ls
-  docker buildx inspect --bootstrap
-  ls -1 /proc/sys/fs/binfmt_misc
 
   read -r FROM_IMAGE FROM_TAG <<< \
     "$(sed -nr 's/^FROM\s+([^:]+):?((\w+).*)\s*$/\1 \3/p' Dockerfile | head -1)"
