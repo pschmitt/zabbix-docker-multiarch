@@ -138,8 +138,8 @@ case "$(uname -m)" in
 esac
 
 # buildx setup
-install_latest_buildx
 export DOCKER_CLI_EXPERIMENTAL=enabled
+install_latest_buildx
 
 # shellcheck disable=2068
 docker buildx build \
