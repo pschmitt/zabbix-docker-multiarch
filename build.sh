@@ -47,7 +47,9 @@ install_latest_buildx() {
 }
 
 get_available_architectures() {
-  local token image="$1" tag="${2:-latest}"
+  local image="$1"
+  local tag="${2:-latest}"
+  local token
   local tmp
 
   if ! grep -q / <<< "$image"
@@ -57,7 +59,10 @@ get_available_architectures() {
   fi
 
   # Disable -x so that the token does not get displayed in the log
-  set +x
+  if [[ "$TRAVIS" == "true" ]]
+  then
+    set +x
+  fi
 
   token=$(curl -s -H "Content-Type: application/json" \
             -X POST \
@@ -74,13 +79,30 @@ get_available_architectures() {
           "https://hub.docker.com/v2/repositories/${image}/tags/?page_size=10000")"
 
   # Re-enable -x for debugging purposes
-  set -x
+  if [[ "$TRAVIS" == "true" ]]
+  then
+    set -x
+  fi
 
   jq -r '.results[] | select(.name == "'"${tag}"'").images[] |
          .os + "/" + .architecture + "/" + .variant' <<< "$tmp" | \
-    sed 's#/$##' | sort | \
-    grep -vE 'ppc64le|s390x'   # FIXME
-  # TODO Invalidate token
+    sed 's#/$##' | sort   # TODO Invalidate token
+}
+
+get_available_architectures_safe() {
+  # FIXME Statically disabling archs should not be necessary...
+  local all_archs
+
+  all_archs=$(get_available_architectures "$@")
+  if  [[ "$OS" == "centos" ]]
+  then
+    grep -vE 'ppc64le|s390x|arm/v6' <<< "$all_archs"
+  elif  [[ "$PROJECT" == "agent2" ]]
+  then
+    grep -vE 'ppc64le|s390x|arm/v6|arm/v7' <<< "$all_archs"
+  else
+    grep -vE 'ppc64le|s390x' <<< "$all_archs"
+  fi
 }
 
 array_join() {
@@ -211,16 +233,27 @@ then
   echo "Upstream base image: $FROM_IMAGE TAG=$FROM_TAG"
 
   TARGET_PLATFORMS=()
-  for arch in $(get_available_architectures "$FROM_IMAGE" "$FROM_TAG")
+  for arch in $(get_available_architectures_safe "$FROM_IMAGE" "$FROM_TAG")
   do
     TARGET_PLATFORMS+=("$arch")
   done
 
-  # shellcheck disable=2068
-  docker buildx build \
-    --platform "$(array_join "," "${TARGET_PLATFORMS[@]}")" \
-    --output "type=image,push=${PUSH_IMAGE}" \
-    ${TAG_ARGS[@]} .
+  if [[ -n "$DRYRUN" ]]
+  then
+    # shellcheck disable=2068
+    echo docker buildx build \
+      --platform "$(array_join "," "${TARGET_PLATFORMS[@]}")" \
+      --output "type=image,push=${PUSH_IMAGE}" \
+      ${TAG_ARGS[@]} .
+  else
+    # shellcheck disable=2068
+    docker buildx build \
+      --platform "$(array_join "," "${TARGET_PLATFORMS[@]}")" \
+      --output "type=image,push=${PUSH_IMAGE}" \
+      ${TAG_ARGS[@]} .
+  fi
+
+  # TODO Detect which architectures failed and retry build without them
 fi
 
 # vim set et ts=2 sw=2 :
