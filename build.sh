@@ -114,8 +114,9 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]
 then
   set -ex
 
+  export DOCKER_CLI_EXPERIMENTAL=enabled
   ~/.docker/cli-plugins/docker-buildx version
-  docker buildx version || exit 88
+  DOCKER_CLI_EXPERIMENTAL=enabled docker buildx version || exit 88
 
   cd "$(readlink -f "$(dirname "$0")")" || exit 9
 
