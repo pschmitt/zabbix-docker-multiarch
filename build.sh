@@ -50,6 +50,12 @@ get_available_architectures() {
   local token image="$1" tag="${2:-latest}"
   local tmp
 
+  if ! grep -q / <<< "$image"
+  then
+    # Prepend default namespace
+    image="library/${image}"
+  fi
+
   token=$(curl -s -H "Content-Type: application/json" \
             -X POST \
             -d '{"username": "'"${DOCKER_USERNAME}"'", "password": "'"${DOCKER_PASSWORD}"'"}' \
@@ -65,7 +71,9 @@ get_available_architectures() {
           "https://hub.docker.com/v2/repositories/${image}/tags/?page_size=10000")"
   jq -r '.results[] | select(.name == "'"${tag}"'").images[] |
          .os + "/" + .architecture + "/" + .variant' <<< "$tmp" | \
-    sed 's#/$##' | sort
+    sed 's#/$##' | sort | \
+    grep -vE 'ppc64le|s390x'   # FIXME
+  # TODO Invalidate token
 }
 
 array_join() {
@@ -193,11 +201,6 @@ then
 
   read -r FROM_IMAGE FROM_TAG <<< \
     "$(sed -nr 's/^FROM\s+([^:]+):?((\w+).*)\s*$/\1 \3/p' Dockerfile | head -1)"
-  if ! grep -q / <<< "$FROM_IMAGE"
-  then
-    # Prepend default namespace
-    FROM_IMAGE="library/${FROM_IMAGE}"
-  fi
 
   echo "Upstream base image: $FROM_IMAGE TAG=$FROM_TAG"
 
