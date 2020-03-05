@@ -43,7 +43,16 @@ install_latest_buildx() {
   wget -o ~/.docker/cli-plugins/docker-buildx \
     "https://github.com/docker/buildx/releases/download/v${version}/buildx-v${version}.linux-${arch}"
   chmod +x ~/.docker/cli-plugins/docker-buildx
-  docker buildx version
+
+  if ! [[ -e ~/.docker/config.json ]]
+  then
+    echo '{"experimental": "enabled"}' > ~/.docker/config.json
+  fi
+  if [[ "$TRAVIS" == "true" ]]
+  then
+    sudo service docker restart
+  fi
+  DOCKER_CLI_EXPERIMENTAL=enabled docker buildx version
 }
 
 if [[ "$#" -lt 1 ]]
