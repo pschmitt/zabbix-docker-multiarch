@@ -42,12 +42,6 @@ install_latest_buildx() {
   curl -L -o ~/.docker/cli-plugins/docker-buildx \
     "https://github.com/docker/buildx/releases/download/v${version}/buildx-v${version}.linux-${arch}"
   chmod +x ~/.docker/cli-plugins/docker-buildx
-
-  # if [[ "$TRAVIS" == "true" ]]
-  # then
-  #   echo '{"experimental": "enabled"}' > ~/.docker/config.json
-  #   sudo service docker restart
-  # fi
 }
 
 get_available_architectures() {
@@ -63,7 +57,7 @@ get_available_architectures() {
   fi
 
   # Disable -x so that the token does not get displayed in the log
-  if [[ "$TRAVIS" == "true" ]]
+  if [[ "$TRAVIS" == "true" ]] || [[ -z "$GITHUB_RUN_ID" ]]
   then
     set +x
   fi
@@ -83,7 +77,7 @@ get_available_architectures() {
           "https://hub.docker.com/v2/repositories/${image}/tags/?page_size=10000")"
 
   # Re-enable -x for debugging purposes
-  if [[ "$TRAVIS" == "true" ]]
+  if [[ "$TRAVIS" == "true" ]] || [[ -z "$GITHUB_RUN_ID" ]]
   then
     set -x
   fi
