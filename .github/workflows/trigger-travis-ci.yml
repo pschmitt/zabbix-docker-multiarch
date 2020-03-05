@@ -6,7 +6,7 @@ on:
     - cron:  '0 2 * * *'
 
 jobs:
-  trigger_travic_ci:
+  trigger_travis_ci:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@master
