@@ -185,6 +185,8 @@ then
   then
     docker buildx create --use --name build --node build --driver-opt network=host
   fi
+  # List available builders/platforms
+  docker buildx ls
 
   read -r FROM_IMAGE FROM_TAG <<< \
     "$(sed -nr 's/^FROM\s+([^:]+):?((\w+).*)\s*$/\1 \3/p' Dockerfile | head -1)"
