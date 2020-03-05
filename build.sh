@@ -12,6 +12,37 @@ is_latest_tag() {
   [[ "$(git tag -l | sort -n | tail -1)" == "$1" ]]
 }
 
+install_latest_buildx() {
+  local arch
+  local version=0.3.1
+
+  if [[ -x ~/.docker/cli-plugins/docker-buildx ]]
+  then
+    return
+  fi
+
+  mkdir -p ~/.docker/cli-plugins
+  case "$(uname -m)" in
+    x86_64)
+      arch=amd64
+      ;;
+    aarch64)
+      arch=arm64
+      ;;
+    armv6l|arm)
+      arch=arm-v6
+      ;;
+    armv7l|armhf)
+      arch=arm-v7
+      ;;
+    *)
+      arch="$(uname -m)"
+      ;;
+  esac
+  wget -o ~/.docker/cli-plugins/docker-buildx \
+    "https://github.com/docker/buildx/releases/download/v${version}/buildx-v${version}.linux-${arch}"
+}
+
 if [[ "$#" -lt 1 ]]
 then
   usage
@@ -103,8 +134,12 @@ case "$(uname -m)" in
     ;;
 esac
 
+# buildx setup
+export DOCKER_CLI_EXPERIMENTAL=enabled
+mkdir -p ~/.docker/cli-plugins
+
 # shellcheck disable=2068
-docker buildx build \
+echo docker buildx build \
   --platform linux/386,linux/amd64,linux/arm/v6,linux/arm/v7,linux/arm64 \
   --output "type=image,push=${PUSH_IMAGE}" \
   ${TAG_ARGS[@]} .
