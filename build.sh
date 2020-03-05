@@ -46,6 +46,34 @@ install_latest_buildx() {
   # fi
 }
 
+get_available_architectures() {
+  local token image="$1" tag="${2:-latest}"
+  local tmp
+
+  token=$(curl -s -H "Content-Type: application/json" \
+            -X POST \
+            -d '{"username": "'"${DOCKER_HUB_USERNAME}"'", "password": "'"${DOCKER_HUB_PASSWORD}"'"}' \
+            https://hub.docker.com/v2/users/login/ | \
+           jq -r .token)
+  if [[ -z "$token" ]]
+  then
+    echo "Unable to log in to Docker Hub." >&2
+    echo "Please verify the values of DOCKER_HUB_USERNAME and DOCKER_HUB_PASSWORD" >&2
+    return 1
+  fi
+  tmp="$(curl -s -H "Authorization: JWT ${token}" \
+          "https://hub.docker.com/v2/repositories/${image}/tags/?page_size=10000")"
+  jq -r '.results[] | select(.name == "'"${tag}"'").images[] |
+         .os + "/" + .architecture + "/" + .variant' <<< "$tmp" | \
+    sed 's#/$##' | sort
+}
+
+array_join() {
+  local IFS="$1"
+  shift
+  echo "$*"
+}
+
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]
 then
@@ -158,9 +186,25 @@ then
     docker buildx create --use --name build --node build --driver-opt network=host
   fi
 
+  read -r FROM_IMAGE FROM_TAG <<< \
+    "$(sed -nr 's/FROM\s+([^:]+):?([^\s]+)?/\1 \2/p' Dockerfile | head -1)"
+  if ! grep -q / <<< "$FROM_IMAGE"
+  then
+    # Prepend default namespace
+    FROM_IMAGE="library/${FROM_IMAGE}"
+  fi
+
+  echo "Upstream base image: $FROM_IMAGE TAG=$FROM_TAG"
+
+  TARGET_PLATFORMS=()
+  for arch in $(get_available_architectures "$FROM_IMAGE" "$FROM_TAG")
+  do
+    TARGET_PLATFORMS+=("$arch")
+  done
+
   # shellcheck disable=2068
   docker buildx build \
-    --platform linux/386,linux/amd64,linux/arm/v6,linux/arm/v7,linux/arm64 \
+    --platform "$(array_join "," "${TARGET_PLATFORMS[@]}")" \
     --output "type=image,push=${PUSH_IMAGE}" \
     ${TAG_ARGS[@]} .
 fi
