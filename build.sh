@@ -46,7 +46,6 @@ install_latest_buildx() {
 }
 
 setup_buildx() {
-  docker version
   # GitHub Actions
   if [[ -n "$GITHUB_RUN_ID" ]]
   then
@@ -67,6 +66,7 @@ setup_buildx() {
     esac
   fi
   # Debug info for buildx and multiarch support
+  docker version
   docker buildx ls
   docker buildx inspect --bootstrap
   ls -1 /proc/sys/fs/binfmt_misc
@@ -210,7 +210,7 @@ then
     git clone https://github.com/zabbix/zabbix-docker "$BUILD_DIR"
   fi
 
-  cd "$BUILD_DIR"
+  cd "$BUILD_DIR" || exit 9
 
   if [[ -z "$GITREF" ]]
   then
