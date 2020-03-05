@@ -145,8 +145,11 @@ then
 
   # buildx setup
   export DOCKER_CLI_EXPERIMENTAL=enabled
-  install_latest_buildx
-  setup_buildx
+  if ! [[ -x ~/.docker/cli-plugins/docker-buildx ]]
+  then
+    install_latest_buildx
+    setup_buildx
+  fi
   if ! docker buildx version
   then
     echo "buildx is not available" >&2
