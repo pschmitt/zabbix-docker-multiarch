@@ -9,8 +9,13 @@ list_targets() {
   trap "rm -rf \"$tmpdir\"" EXIT
 }
 
-for target in $(list_targets)
-do
-  echo "# BUILD $target"
-  ./build-all-tags.sh "$target"
-done
+if [[ "${BASH_SOURCE[0]}" == "${0}" ]]
+then
+  cd "$(readlink -f "$(dirname "$0")")" || exit 9
+
+  for target in $(list_targets)
+  do
+    echo "# BUILD $target"
+    ./build.sh "$target"
+  done
+fi
