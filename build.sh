@@ -8,29 +8,43 @@ usage() {
   echo "$(basename "$0") TARGET [GITREF] [--push]"
 }
 
-if [[ -z "$1" ]]
+is_latest_tag() {
+  [[ "$(git tag -l | sort -n | tail -1)" == "$1" ]]
+}
+
+if [[ "$#" -lt 1 ]]
 then
   usage
   exit 2
 fi
 
+case "$1" in
+  -h|--help|h|help)
+    usage
+    exit 0
+    ;;
+esac
+
+TARGET="$1"
+# Defaults
 GITREF=master
+PUSH_IMAGE=false
 
 case "$2" in
   -f|--force|-p|--push)
-    PUSH_IMAGE=1
+    PUSH_IMAGE=true
     ;;
   *)
     GITREF="$2"
     case "$3" in
       -f|--force|-p|--push)
-        PUSH_IMAGE=1
+        PUSH_IMAGE=true
         ;;
     esac
     ;;
 esac
 
-read -r PROJECT OS <<< "$(sed -r 's/(.+)-(.+)/\1 \2/' <<< "$1")"
+read -r PROJECT OS <<< "$(sed -r 's/(.+)-(.+)/\1 \2/' <<< "$TARGET")"
 
 if [[ -z "$PROJECT" ]] || [[ -z "$OS" ]]
 then
@@ -52,6 +66,7 @@ else
 fi
 
 cd "$BUILD_DIR"
+
 git checkout "$GITREF"
 
 if ! cd "${BUILD_DIR}/${PROJECT}/${OS}" 2> /dev/null
@@ -67,21 +82,31 @@ else
   DOCKER_TAG="$GITREF"
 fi
 
-DOCKER_IMAGE="pschmitt/zabbix-${PROJECT}-${OS}:${DOCKER_TAG}"
-echo "Building $DOCKER_IMAGE"
+DOCKER_IMAGES=("pschmitt/zabbix-${PROJECT}-${OS}:${DOCKER_TAG}")
+if is_latest_tag "$GITREF"
+then
+  DOCKER_IMAGES+=("pschmitt/zabbix-${PROJECT}-${OS}:latest")
+fi
+echo "Building ${DOCKER_IMAGES[0]}"
+
+TAG_ARGS=()
+for img in "${DOCKER_IMAGES[@]}"
+do
+  TAG_ARGS+=("--tag $img")
+done
 
 case "$(uname -m)" in
   x86_64|i386)
     echo "Setting up ARM compatibility"
-    docker run --rm --privileged docker/binfmt:820fdd95a9972a5308930a2bdfb8573dd4447ad3
+    # docker run --rm --privileged docker/binfmt:820fdd95a9972a5308930a2bdfb8573dd4447ad3
+    docker run --rm --privileged docker/binfmt:a7996909642ee92942dcd6cff44b9b95f08dad64
     ;;
 esac
 
-docker build --platform=linux/arm -t "$DOCKER_IMAGE" .
-
-if [[ -n "$PUSH_IMAGE" ]]
-then
-  docker push "$DOCKER_IMAGE"
-fi
+# shellcheck disable=2068
+docker buildx build \
+  --platform linux/386,linux/amd64,linux/arm/v6,linux/arm/v7,linux/arm64 \
+  --output "type=image,push=${PUSH_IMAGE}" \
+  ${TAG_ARGS[@]} .
 
 # vim set et ts=2 sw=2 :
