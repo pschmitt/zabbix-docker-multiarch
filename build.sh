@@ -15,8 +15,9 @@ is_latest_tag() {
 install_latest_buildx() {
   local arch
   local version=0.3.1
+  local buildx_path=~/.docker/cli-plugins/docker-buildx
 
-  if [[ -x ~/.docker/cli-plugins/docker-buildx ]]
+  if [[ -x "$buildx_path" ]]
   then
     return
   fi
@@ -38,10 +39,29 @@ install_latest_buildx() {
       arch="$(uname -m)"
       ;;
   esac
-  mkdir -p ~/.docker/cli-plugins
-  curl -L -o ~/.docker/cli-plugins/docker-buildx \
+  mkdir -p "$(dirname "$buildx_path")"
+  curl -L -o "$buildx_path" \
     "https://github.com/docker/buildx/releases/download/v${version}/buildx-v${version}.linux-${arch}"
-  chmod +x ~/.docker/cli-plugins/docker-buildx
+  chmod +x "$buildx_path"
+}
+
+setup_buildx() {
+  # GitHub Actions
+  if [[ -n "$GITHUB_RUN_ID" ]]
+  then
+    docker run --rm --privileged multiarch/qemu-user-static --reset -p yes
+    docker buildx create --name builder --driver docker-container --use
+    docker buildx inspect --bootstrap
+    docker buildx inspect
+  else
+    # Not GitHub Actions
+    case "$(uname -m)" in
+      x86_64|i386)
+          echo "Setting up ARM compatibility"
+          docker run --rm --privileged docker/binfmt:a7996909642ee92942dcd6cff44b9b95f08dad64
+        ;;
+    esac
+  fi
 }
 
 get_available_architectures() {
@@ -113,10 +133,6 @@ array_join() {
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]
 then
   set -ex
-
-  export DOCKER_CLI_EXPERIMENTAL=enabled
-  ~/.docker/cli-plugins/docker-buildx version
-  DOCKER_CLI_EXPERIMENTAL=enabled docker buildx version || exit 88
 
   cd "$(readlink -f "$(dirname "$0")")" || exit 9
 
@@ -207,19 +223,10 @@ then
     TAG_ARGS+=("--tag $img")
   done
 
-  if [[ -z "$GITHUB_RUN_ID" ]]
-  then
-    case "$(uname -m)" in
-      x86_64|i386)
-          echo "Setting up ARM compatibility"
-          docker run --rm --privileged docker/binfmt:a7996909642ee92942dcd6cff44b9b95f08dad64
-        ;;
-    esac
-  fi
-
   # buildx setup
   export DOCKER_CLI_EXPERIMENTAL=enabled
   install_latest_buildx
+  setup_buildx
   if ! docker buildx version
   then
     echo "buildx is not available" >&2

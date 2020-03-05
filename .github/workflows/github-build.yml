@@ -14,14 +14,14 @@ jobs:
         with:
           ref: ${{ github.ref }}
 
-      - name: Set up Docker Buildx
-        id: buildx
-        uses: crazy-max/ghaction-docker-buildx@v1
-        with:
-          version: latest
-
-      - name: Display available platforms
-        run: echo ${{ steps.buildx.outputs.platforms }}
+      # - name: Set up Docker Buildx
+      #   id: buildx
+      #   uses: crazy-max/ghaction-docker-buildx@v1
+      #   with:
+      #     version: latest
+      #
+      # - name: Display available platforms
+      #   run: echo ${{ steps.buildx.outputs.platforms }}
 
       - name: Docker login
         uses: azure/docker-login@v1
@@ -34,4 +34,4 @@ jobs:
           DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
           DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
           DOCKER_CLI_EXPERIMENTAL: enabled
-        run: docker buildx version && ./build-all.sh
+        run: ./build-all.sh
