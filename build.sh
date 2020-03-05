@@ -52,13 +52,13 @@ get_available_architectures() {
 
   token=$(curl -s -H "Content-Type: application/json" \
             -X POST \
-            -d '{"username": "'"${DOCKER_HUB_USERNAME}"'", "password": "'"${DOCKER_HUB_PASSWORD}"'"}' \
+            -d '{"username": "'"${DOCKER_USERNAME}"'", "password": "'"${DOCKER_PASSWORD}"'"}' \
             https://hub.docker.com/v2/users/login/ | \
            jq -r .token)
   if [[ -z "$token" ]]
   then
     echo "Unable to log in to Docker Hub." >&2
-    echo "Please verify the values of DOCKER_HUB_USERNAME and DOCKER_HUB_PASSWORD" >&2
+    echo "Please verify the values of DOCKER_USERNAME and DOCKER_PASSWORD" >&2
     return 1
   fi
   tmp="$(curl -s -H "Authorization: JWT ${token}" \
