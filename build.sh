@@ -41,6 +41,7 @@ install_latest_buildx() {
   esac
   wget -o ~/.docker/cli-plugins/docker-buildx \
     "https://github.com/docker/buildx/releases/download/v${version}/buildx-v${version}.linux-${arch}"
+  chmod +x ~/.docker/cli-plugins/docker-buildx
 }
 
 if [[ "$#" -lt 1 ]]
