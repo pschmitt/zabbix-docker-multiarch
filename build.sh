@@ -135,8 +135,8 @@ case "$(uname -m)" in
 esac
 
 # buildx setup
+install_latest_buildx
 export DOCKER_CLI_EXPERIMENTAL=enabled
-mkdir -p ~/.docker/cli-plugins
 
 # shellcheck disable=2068
 docker buildx build \
