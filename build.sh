@@ -139,7 +139,7 @@ export DOCKER_CLI_EXPERIMENTAL=enabled
 mkdir -p ~/.docker/cli-plugins
 
 # shellcheck disable=2068
-echo docker buildx build \
+docker buildx build \
   --platform linux/386,linux/amd64,linux/arm/v6,linux/arm/v7,linux/arm64 \
   --output "type=image,push=${PUSH_IMAGE}" \
   ${TAG_ARGS[@]} .
