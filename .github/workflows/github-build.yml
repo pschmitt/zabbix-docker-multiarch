@@ -14,14 +14,14 @@ jobs:
         with:
           ref: ${{ github.ref }}
           
-      - name: Set up Docker Buildx
-        id: buildx
-        uses: crazy-max/ghaction-docker-buildx@v1
-        with:
-          version: latest
+      # - name: Set up Docker Buildx
+      #   id: buildx
+      #   uses: crazy-max/ghaction-docker-buildx@v1
+      #   with:
+      #     version: latest
           
-      - name: Display available platforms
-        run: echo ${{ steps.buildx.outputs.platforms }}
+      # - name: Display available platforms
+      #   run: echo ${{ steps.buildx.outputs.platforms }}
         
       - name: Docker login 
         uses: azure/docker-login@v1
