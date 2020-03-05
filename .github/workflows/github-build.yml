@@ -34,4 +34,4 @@ jobs:
           DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
           DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
           DOCKER_CLI_EXPERIMENTAL: enabled
-        run: ~/.docker/cli-plugins/docker-buildx version && ./build-all.sh
+        run: docker buildx version && ./build-all.sh
