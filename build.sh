@@ -96,7 +96,7 @@ get_available_architectures_safe() {
   all_archs=$(get_available_architectures "$@")
   if  [[ "$OS" == "centos" ]]
   then
-    grep -vE 'ppc64le|s390x|arm/v6' <<< "$all_archs"
+    grep -vE 'ppc64le|s390x|arm/v6|arm/v7' <<< "$all_archs"
   elif  [[ "$PROJECT" == "agent2" ]]
   then
     grep -vE 'ppc64le|s390x|arm/v6|arm/v7' <<< "$all_archs"
