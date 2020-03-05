@@ -47,9 +47,10 @@ travis_build() {
     done
   done
 
-  local body='{
+  local body
+  body='{
    "request": {
-   "message": "Auto build",
+   "message": "'"$(git show -s --format=%s)"' (Auto build)",
    "branch": "'"$(git rev-parse --abbrev-ref HEAD)"'",
    "config": {
      "env": {
@@ -83,5 +84,5 @@ then
       ;;
   esac
 
-  travis_build "$1"
+  travis_build "$@"
 fi
