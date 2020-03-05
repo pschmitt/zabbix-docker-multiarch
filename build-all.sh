@@ -1,18 +1,15 @@
 #!/usr/bin/env bash
 
-TARGETS=(
-  agent-alpine
-  proxy-mysql-alpine
-  proxy-sqlite3-alpine
-  server-mysql-alpine
-  server-pgsql-alpine
-  web-apache-mysql-alpine
-  web-apache-pgsql-alpine
-  web-nginx-mysql-alpine
-  web-nginx-pgsql-alpine
-)
+list_targets() {
+  local tmpdir
+  tmpdir="$(mktemp -d)"
+  git clone -q --depth 1 https://github.com/zabbix/zabbix-docker "$tmpdir"
+  find "$tmpdir" -maxdepth 2 -mindepth 2 -type d | grep -v .git | \
+    sed -e "s|^${tmpdir}/||" -e 's|/|-|'
+  trap "rm -rf \"$tmpdir\"" EXIT
+}
 
-for target in ${TARGETS[@]}
+for target in $(list_targets)
 do
   echo "# BUILD $target"
   ./build-all-tags.sh "$target"
