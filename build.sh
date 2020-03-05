@@ -256,18 +256,32 @@ then
     TARGET_PLATFORMS+=("$arch")
   done
 
+  # Set build labels
+  BUILD_LABELS=("label=built-by=pschmitt")
+  if [[ "$TRAVIS" == "true" ]]
+  then
+    BUILD_LABELS+=("--label=build-type=travis")
+  elif [[ -n "$GITHUB_RUN_ID" ]]
+  then
+    BUILD_LABELS+=("--label=build-type=github-actions" "--label=github-run-id=$GITHUB_RUN_ID")
+  else
+    BUILD_LABELS+=("--label=build-type=manual" "--label=build-host=$HOSTNAME")
+  fi
+
   if [[ -n "$DRYRUN" ]]
   then
-    # shellcheck disable=2068
+    # shellcheck disable=2046,2068
     echo docker buildx build \
       --platform "$(array_join "," "${TARGET_PLATFORMS[@]}")" \
       --output "type=image,push=${PUSH_IMAGE}" \
+      $(array_join " " "${BUILD_LABELS[@]}") \
       ${TAG_ARGS[@]} .
   else
-    # shellcheck disable=2068
+    # shellcheck disable=2046,2068
     docker buildx build \
       --platform "$(array_join "," "${TARGET_PLATFORMS[@]}")" \
       --output "type=image,push=${PUSH_IMAGE}" \
+      $(array_join " " "${BUILD_LABELS[@]}") \
       ${TAG_ARGS[@]} .
   fi
 
