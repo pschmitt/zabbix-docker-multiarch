@@ -114,6 +114,8 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]
 then
   set -ex
 
+  ~/.docker/cli-plugins/docker-buildx version
+
   cd "$(readlink -f "$(dirname "$0")")" || exit 9
 
   if [[ "$#" -lt 1 ]]
