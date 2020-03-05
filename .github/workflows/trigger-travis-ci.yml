@@ -1,4 +1,4 @@
-name: CI
+name: Trigger Travis CI build
 
 on:
   push:
@@ -6,7 +6,7 @@ on:
     - cron:  '0 2 * * *'
 
 jobs:
-  build:
+  trigger_travic_ci:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@master
