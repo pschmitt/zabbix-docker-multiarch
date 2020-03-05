@@ -18,10 +18,10 @@ install_latest_buildx() {
 
   if [[ -x ~/.docker/cli-plugins/docker-buildx ]]
   then
+    docker buildx version
     return
   fi
 
-  mkdir -p ~/.docker/cli-plugins
   case "$(uname -m)" in
     x86_64)
       arch=amd64
@@ -39,9 +39,11 @@ install_latest_buildx() {
       arch="$(uname -m)"
       ;;
   esac
+  mkdir -p ~/.docker/cli-plugins
   wget -o ~/.docker/cli-plugins/docker-buildx \
     "https://github.com/docker/buildx/releases/download/v${version}/buildx-v${version}.linux-${arch}"
   chmod +x ~/.docker/cli-plugins/docker-buildx
+  docker buildx version
 }
 
 if [[ "$#" -lt 1 ]]
