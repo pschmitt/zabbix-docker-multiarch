@@ -33,4 +33,4 @@ jobs:
         env:
           DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
           DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
-        run: command -v docker && ./build-all.sh
+        run: ~/.docker/cli-plugins/docker-buildx version && ./build-all.sh
