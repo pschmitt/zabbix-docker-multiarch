@@ -115,6 +115,7 @@ then
   set -ex
 
   ~/.docker/cli-plugins/docker-buildx version
+  docker buildx version || exit 88
 
   cd "$(readlink -f "$(dirname "$0")")" || exit 9
 
