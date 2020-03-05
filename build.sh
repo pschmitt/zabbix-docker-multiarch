@@ -46,6 +46,7 @@ install_latest_buildx() {
 }
 
 setup_buildx() {
+  docker version
   # GitHub Actions
   if [[ -n "$GITHUB_RUN_ID" ]]
   then
@@ -151,7 +152,7 @@ then
     install_latest_buildx
     setup_buildx
   fi
-  if ! docker buildx version
+  if ! docker buildx version >/dev/null
   then
     echo "buildx is not available" >&2
     exit 99
