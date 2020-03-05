@@ -39,12 +39,9 @@ install_latest_buildx() {
     "https://github.com/docker/buildx/releases/download/v${version}/buildx-v${version}.linux-${arch}"
   chmod +x ~/.docker/cli-plugins/docker-buildx
 
-  # if ! [[ -e ~/.docker/config.json ]]
-  # then
-  #   echo '{"experimental": "enabled"}' > ~/.docker/config.json
-  # fi
   # if [[ "$TRAVIS" == "true" ]]
   # then
+  #   echo '{"experimental": "enabled"}' > ~/.docker/config.json
   #   sudo service docker restart
   # fi
 }
@@ -154,6 +151,11 @@ then
   then
     echo "buildx is not available" >&2
     exit 99
+  fi
+
+  if [[ "$TRAVIS" == "true" ]]
+  then
+    docker buildx create --use --name build --node build --driver-opt network=host
   fi
 
   # shellcheck disable=2068
