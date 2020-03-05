@@ -4,8 +4,12 @@ usage() {
   echo "$(basename "$0") TARGET [GITREF] [--push]"
 }
 
+get_latest_tag() {
+  git tag -l | sort -n | tail -1
+}
+
 is_latest_tag() {
-  [[ "$(git tag -l | sort -n | tail -1)" == "$1" ]]
+  [[ "$(get_latest_tag)" == "$1" ]]
 }
 
 install_latest_buildx() {
@@ -133,7 +137,6 @@ then
 
   TARGET="$1"
   # Defaults
-  GITREF=master
   PUSH_IMAGE=false
 
   case "$2" in
@@ -172,6 +175,11 @@ then
   fi
 
   cd "$BUILD_DIR"
+
+  if [[ -z "$GITREF" ]]
+  then
+    GITREF="$(get_latest_tag)"
+  fi
 
   git checkout "$GITREF"
 
