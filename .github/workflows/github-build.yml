@@ -29,6 +29,9 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
+      - name: Install latest Docker version
+        run: curl -fsSL https://get.docker.com | sh
+
       - name: Start GitHub Actions build of zabbix-docker-armhf
         env:
           DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
