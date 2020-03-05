@@ -257,7 +257,7 @@ then
   done
 
   # Set build labels
-  BUILD_LABELS=("label=built-by=pschmitt")
+  BUILD_LABELS=("--label=built-by=pschmitt")
   if [[ "$TRAVIS" == "true" ]]
   then
     BUILD_LABELS+=("--label=build-type=travis")
