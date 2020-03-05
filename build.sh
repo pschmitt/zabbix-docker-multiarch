@@ -185,8 +185,11 @@ then
   then
     docker buildx create --use --name build --node build --driver-opt network=host
   fi
-  # List available builders/platforms
+
+  # Debug info for buildx and multiarch support
   docker buildx ls
+  docker buildx inspect --bootstrap
+  ls -1 /proc/sys/fs/binfmt_misc
 
   read -r FROM_IMAGE FROM_TAG <<< \
     "$(sed -nr 's/^FROM\s+([^:]+):?((\w+).*)\s*$/\1 \3/p' Dockerfile | head -1)"
