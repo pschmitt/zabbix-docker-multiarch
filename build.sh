@@ -56,6 +56,9 @@ get_available_architectures() {
     image="library/${image}"
   fi
 
+  # Disable -x so that the token does not get displayed in the log
+  set +x
+
   token=$(curl -s -H "Content-Type: application/json" \
             -X POST \
             -d '{"username": "'"${DOCKER_USERNAME}"'", "password": "'"${DOCKER_PASSWORD}"'"}' \
@@ -69,6 +72,10 @@ get_available_architectures() {
   fi
   tmp="$(curl -s -H "Authorization: JWT ${token}" \
           "https://hub.docker.com/v2/repositories/${image}/tags/?page_size=10000")"
+
+  # Re-enable -x for debugging purposes
+  set -x
+
   jq -r '.results[] | select(.name == "'"${tag}"'").images[] |
          .os + "/" + .architecture + "/" + .variant' <<< "$tmp" | \
     sed 's#/$##' | sort | \
@@ -211,7 +218,7 @@ then
   done
 
   # shellcheck disable=2068
-  docker buildx build \
+  echo docker buildx build \
     --platform "$(array_join "," "${TARGET_PLATFORMS[@]}")" \
     --output "type=image,push=${PUSH_IMAGE}" \
     ${TAG_ARGS[@]} .
