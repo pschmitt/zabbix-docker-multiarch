@@ -50,7 +50,7 @@ travis_build() {
   local body
   body='{
    "request": {
-   "message": "'"$(git show -s --format=%s)"' (Auto build)",
+   "message": "'"$(git show -s --format=%s)"'",
    "branch": "'"$(git rev-parse --abbrev-ref HEAD)"'",
    "config": {
      "env": {
