@@ -279,11 +279,20 @@ then
       ${TAG_ARGS[@]} .
   else
     # shellcheck disable=2046,2068
-    docker buildx build \
+    if ! docker buildx build \
       --platform "$(array_join "," "${TARGET_PLATFORMS[@]}")" \
       --output "type=image,push=${PUSH_IMAGE}" \
       $(array_join " " "${BUILD_LABELS[@]}") \
       ${TAG_ARGS[@]} .
+    then
+      echo "Building for ${TARGET_PLATFORMS[*]} FAILED\!" >&2
+      echo "Retrying with only amd64 and aarch64" >&2
+      docker buildx build \
+        --platform "linux/amd64,linux/arm64/v8" \
+        --output "type=image,push=${PUSH_IMAGE}" \
+        $(array_join " " "${BUILD_LABELS[@]}") \
+        ${TAG_ARGS[@]} .
+    fi
   fi
 
   # TODO Detect which architectures failed and retry build without them
