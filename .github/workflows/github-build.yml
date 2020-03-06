@@ -25,7 +25,5 @@ jobs:
 
       - name: Start GitHub Actions build of zabbix-docker-armhf
         env:
-          DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
-          DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
           DOCKER_CLI_EXPERIMENTAL: enabled
         run: ./build-all.sh

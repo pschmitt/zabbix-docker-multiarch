@@ -76,44 +76,10 @@ setup_buildx() {
 get_available_architectures() {
   local image="$1"
   local tag="${2:-latest}"
-  local token
-  local tmp
 
-  if ! grep -q / <<< "$image"
-  then
-    # Prepend default namespace
-    image="library/${image}"
-  fi
-
-  # Disable -x so that the token does not get displayed in the log
-  if [[ "$TRAVIS" == "true" ]] || [[ -z "$GITHUB_RUN_ID" ]]
-  then
-    set +x
-  fi
-
-  token=$(curl -s -H "Content-Type: application/json" \
-            -X POST \
-            -d '{"username": "'"${DOCKER_USERNAME}"'", "password": "'"${DOCKER_PASSWORD}"'"}' \
-            https://hub.docker.com/v2/users/login/ | \
-           jq -r .token)
-  if [[ -z "$token" ]]
-  then
-    echo "Unable to log in to Docker Hub." >&2
-    echo "Please verify the values of DOCKER_USERNAME and DOCKER_PASSWORD" >&2
-    return 1
-  fi
-  tmp="$(curl -s -H "Authorization: JWT ${token}" \
-          "https://hub.docker.com/v2/repositories/${image}/tags/?page_size=10000")"
-
-  # Re-enable -x for debugging purposes
-  if [[ "$TRAVIS" == "true" ]] || [[ -z "$GITHUB_RUN_ID" ]]
-  then
-    set -x
-  fi
-
-  jq -r '.results[] | select(.name == "'"${tag}"'").images[] |
-         .os + "/" + .architecture + "/" + .variant' <<< "$tmp" | \
-    sed 's#/$##' | sort   # TODO Invalidate token
+  docker buildx imagetools inspect --raw "${image}:${tag}" | \
+    jq -r '.manifests[].platform | .os + "/" + .architecture + "/" + .variant' | \
+    sed 's#/$##' | sort
 }
 
 get_available_architectures_safe() {
