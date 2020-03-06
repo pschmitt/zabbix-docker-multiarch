@@ -54,7 +54,7 @@ setup_buildx() {
   esac
 
   # GitHub Actions
-  if [[ -n "$GITHUB_RUN_ID" ]]
+  if [[ "$GITHUB_ACTIONS" == "true" ]]
   then
     docker buildx create --use --name builder --node builder --driver docker-container
     docker buildx inspect --bootstrap
