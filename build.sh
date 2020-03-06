@@ -46,21 +46,21 @@ install_latest_buildx() {
 }
 
 setup_buildx() {
+  case "$(uname -m)" in
+    x86_64|i386)
+      docker run --rm --privileged multiarch/qemu-user-static --reset -p yes
+      # docker run --rm --privileged docker/binfmt:a7996909642ee92942dcd6cff44b9b95f08dad64
+      ;;
+  esac
+
   # GitHub Actions
   if [[ -n "$GITHUB_RUN_ID" ]]
   then
-    docker run --rm --privileged multiarch/qemu-user-static --reset -p yes
     docker buildx create --use --name builder --node builder --driver docker-container
     docker buildx inspect --bootstrap
     docker buildx inspect
   else
     # Not GitHub Actions
-    case "$(uname -m)" in
-      x86_64|i386)
-          echo "Setting up ARM compatibility"
-          docker run --rm --privileged docker/binfmt:a7996909642ee92942dcd6cff44b9b95f08dad64
-        ;;
-    esac
     if [[ "$TRAVIS" == "true" ]]
     then
       docker buildx create --use --name builder --node builder --driver-opt network=host
