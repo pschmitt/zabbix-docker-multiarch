@@ -53,9 +53,6 @@ setup_buildx() {
     docker buildx create --use --name builder --node builder --driver docker-container
     docker buildx inspect --bootstrap
     docker buildx inspect
-  elif [[ "$TRAVIS" == "true" ]]
-  then
-    docker buildx create --use --name builder --node builder --driver-opt network=host
   else
     # Not GitHub Actions
     case "$(uname -m)" in
@@ -64,6 +61,10 @@ setup_buildx() {
           docker run --rm --privileged docker/binfmt:a7996909642ee92942dcd6cff44b9b95f08dad64
         ;;
     esac
+    if [[ "$TRAVIS" == "true" ]]
+    then
+      docker buildx create --use --name builder --node builder --driver-opt network=host
+    fi
   fi
   # Debug info for buildx and multiarch support
   docker version
