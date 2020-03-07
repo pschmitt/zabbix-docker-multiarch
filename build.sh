@@ -266,11 +266,22 @@ then
       then
         echo "Building for armv7, aarch64 and amd64 FAILED\!" >&2
         echo "Retrying with only amd64 and aarch64" >&2
-        docker buildx build \
+
+        if ! docker buildx build \
           --platform "linux/amd64,linux/arm64/v8" \
           --output "type=image,push=${PUSH_IMAGE}" \
           $(array_join " " "${BUILD_LABELS[@]}") \
           ${TAG_ARGS[@]} .
+        then
+          echo "Building for aarch64 and amd64 FAILED\!" >&2
+          echo "Retrying with only amd64" >&2
+
+          docker buildx build \
+            --platform "linux/amd64" \
+            --output "type=image,push=${PUSH_IMAGE}" \
+            $(array_join " " "${BUILD_LABELS[@]}") \
+            ${TAG_ARGS[@]} .
+        fi
       fi
     fi
   fi
