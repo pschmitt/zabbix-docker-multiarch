@@ -19,7 +19,7 @@ I might change this in the future so that it is even more transparent.
 #### Proxy
 
 ```bash
-docker run --name some-zabbix-proxy-sqlite3 -e ZBX_HOSTNAME=some-hostname -e ZBX_SERVER_HOST=some-zabbix-server -d zabbix/zabbix-proxy-sqlite3-alpine:tag
+docker run --name some-zabbix-proxy-sqlite3 -e ZBX_HOSTNAME=some-hostname -e ZBX_SERVER_HOST=some-zabbix-server -d zabbixmultiarch/zabbix-proxy-sqlite3-alpine:tag
 ```
 
 #### Agent
