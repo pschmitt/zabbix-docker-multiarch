@@ -233,7 +233,7 @@ then
   echo "Upstream base image: $FROM_IMAGE TAG=$FROM_TAG"
 
   TARGET_PLATFORMS=()
-  for arch in $(get_available_architectures_safe "$FROM_IMAGE" "$FROM_TAG")
+  for arch in $(get_available_architectures "$FROM_IMAGE" "$FROM_TAG")
   do
     TARGET_PLATFORMS+=("$arch")
   done
