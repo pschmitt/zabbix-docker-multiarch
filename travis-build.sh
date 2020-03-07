@@ -65,7 +65,7 @@ travis_build() {
     -H "Travis-API-Version: 3" \
     -H "Authorization: token $TRAVIS_TOKEN" \
     -d "$body" \
-    https://api.travis-ci.com/repo/pschmitt%2Fzabbix-docker-armhf/requests
+    https://api.travis-ci.com/repo/pschmitt%2Fzabbix-docker-multiarch/requests
 }
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]
