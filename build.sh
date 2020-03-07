@@ -66,6 +66,7 @@ setup_buildx() {
       docker buildx create --use --name builder --node builder --driver-opt network=host
     fi
   fi
+
   # Debug info for buildx and multiarch support
   docker version
   docker buildx ls
@@ -89,12 +90,14 @@ get_available_architectures_safe() {
   all_archs=$(get_available_architectures "$@")
   if  [[ "$OS" == "centos" ]]
   then
-    grep -vE 'ppc64le|s390x|arm/v6|arm/v7' <<< "$all_archs"
+    # grep -vE 'ppc64le|s390x|arm/v6|arm/v7' <<< "$all_archs"
+    grep -vE 'arm/v6|arm/v7' <<< "$all_archs"
   elif  [[ "$PROJECT" == "agent2" ]]
   then
-    grep -vE 'ppc64le|s390x|arm/v6|arm/v7' <<< "$all_archs"
-  else
-    grep -vE 'ppc64le|s390x' <<< "$all_archs"
+    # grep -vE 'ppc64le|s390x|arm/v6|arm/v7' <<< "$all_archs"
+    grep -vE 'arm/v6|arm/v7' <<< "$all_archs"
+  # else
+  #   grep -vE 'ppc64le|s390x' <<< "$all_archs"
   fi
 }
 
@@ -252,12 +255,22 @@ then
       ${TAG_ARGS[@]} .
     then
       echo "Building for ${TARGET_PLATFORMS[*]} FAILED\!" >&2
-      echo "Retrying with only amd64 and aarch64" >&2
-      docker buildx build \
-        --platform "linux/amd64,linux/arm64/v8" \
+      echo "Retrying with only armv7, amd64 and aarch64" >&2
+
+      if ! docker buildx build \
+        --platform "linux/amd64,linux/arm/v7,linux/arm64/v8" \
         --output "type=image,push=${PUSH_IMAGE}" \
         $(array_join " " "${BUILD_LABELS[@]}") \
         ${TAG_ARGS[@]} .
+      then
+        echo "Building for armv7, aarch64 and amd64 FAILED\!" >&2
+        echo "Retrying with only amd64 and aarch64" >&2
+        docker buildx build \
+          --platform "linux/amd64,linux/arm64/v8" \
+          --output "type=image,push=${PUSH_IMAGE}" \
+          $(array_join " " "${BUILD_LABELS[@]}") \
+          ${TAG_ARGS[@]} .
+      fi
     fi
   fi
 
