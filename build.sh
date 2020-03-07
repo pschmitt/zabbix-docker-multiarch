@@ -203,10 +203,10 @@ then
     DOCKER_TAG="$GITREF"
   fi
 
-  DOCKER_IMAGES=("pschmitt/zabbix-${PROJECT}-${OS}:${DOCKER_TAG}")
+  DOCKER_IMAGES=("zabbixmultiarch/zabbix-${PROJECT}-${OS}:${DOCKER_TAG}")
   if is_latest_tag "$GITREF"
   then
-    DOCKER_IMAGES+=("pschmitt/zabbix-${PROJECT}-${OS}:latest")
+    DOCKER_IMAGES+=("zabbixmultiarch/zabbix-${PROJECT}-${OS}:latest")
   fi
   echo "Building ${DOCKER_IMAGES[0]}"
 
