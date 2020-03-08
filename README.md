@@ -10,20 +10,21 @@ To get started please refer to the [upstream documentation](https://www.zabbix.c
 
 Since this here project builds the exact same images as upstream you can simply replace the image names.
 
-The only thing you need to worry about are the tag/image names, intead of `zabbix/zabbix-agent:alpine-latest` you need to use `zabbixmultiarch/zabbix-agent-alpine:latest`.
+- `zabbix/zabbix-agent` becomes `zabbixmultiarch/zabbix-agent`
+- `zabbix/zabbix-server-mysql` becomes `zabbixmultiarch/zabbix-server-mysql`
+- `zabbix/zabbix-proxy-sqlite3` becomes `zabbixmultiarch/zabbix-proxy-sqlite3`
+- etc.
 
-I might change this in the future so that it is even more transparent.
-
-### Example
+### Examples
 
 #### Proxy
 
 ```bash
-docker run --name some-zabbix-proxy-sqlite3 -e ZBX_HOSTNAME=some-hostname -e ZBX_SERVER_HOST=some-zabbix-server -d zabbixmultiarch/zabbix-proxy-sqlite3-alpine:tag
+docker run --name some-zabbix-proxy-sqlite3 -e ZBX_HOSTNAME=some-hostname -e ZBX_SERVER_HOST=some-zabbix-server -d zabbixmultiarch/zabbix-proxy-sqlite3:tag
 ```
 
 #### Agent
 
 ```bash
-docker run --name some-zabbix-agent -e ZBX_HOSTNAME="some-hostname" -e ZBX_SERVER_HOST="some-zabbix-server" -d zabbixmultiarch/zabbix-agent-alpine:tag
+docker run --name some-zabbix-agent -e ZBX_HOSTNAME="some-hostname" -e ZBX_SERVER_HOST="some-zabbix-server" -d zabbixmultiarch/zabbix-agent:tag
 ```
