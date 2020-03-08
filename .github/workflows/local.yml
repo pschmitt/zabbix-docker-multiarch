@@ -4,7 +4,9 @@ on:
   push:
     branches: [ master ]
 
-steps:
+jobs:
+  local-build:
+    steps:
       - name: Checkout repo
         uses: actions/checkout@master
         with:
