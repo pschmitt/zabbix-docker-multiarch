@@ -296,67 +296,44 @@ disable_platforms() {
   echo "${new_platforms[@]}"
 }
 
-buildx_without() {
-  # shellcheck disable=2206
-  local platforms=($1)
-  # shellcheck disable=2206
-  local labels=($2)
-  # shellcheck disable=2206
-  local tag_args=($3)
-  # shellcheck disable=2206
-  local del=($4)
-
-  # shellcheck disable=2207
-  local new_platforms=($(disable_platforms "${platforms[@]}"))
-  if [[ "${new_platforms[*]}" == "${platforms[*]}" ]]  # FIXME
-  then
-    return 1
-  else
-    _buildx "${new_platforms[*]}" "${labels[*]}" "${tags[*]}"
-  fi
-}
-
 buildx_retry() {
   # shellcheck disable=2206
   local platforms=($1)
   # shellcheck disable=2206
   local labels=($2)
   # shellcheck disable=2206
-  local tags=($3)
+  local tag_args=($3)
   local del
-
-  # shellcheck disable=2207
-  tag_args=($(get_tag_args "${images[@]}"))
 
   # TODO Detect which architectures failed and retry build without them
   # TODO Don't retry if disable_platforms results in the same array
   # Step 1: all platforms
 
-  if ! _buildx "${platforms[*]}" "${labels[*]}" "${tags[*]}"
+  if ! _buildx "${platforms[*]}" "${labels[*]}" "${tag_args[*]}"
   then
     # Step 2: Disable i386, ppc64le and s390x
     del=(linux/386 linux/ppc64le linux/s390x)
     # shellcheck disable=2207
     platforms=($(disable_platforms "${del[*]}" "${platforms[@]}"))
-    if ! _buildx "${platforms[*]}" "${labels[*]}" "${tags[*]}"
+    if ! _buildx "${platforms[*]}" "${labels[*]}" "${tag_args[*]}"
     then
       # Step 3: Disable armv6
       del=(linux/arm/v6)
       # shellcheck disable=2207
       platforms=($(disable_platforms "${del[*]}" "${platforms[@]}"))
-      if ! _buildx "${platforms[*]}" "${labels[*]}" "${tags[*]}"
+      if ! _buildx "${platforms[*]}" "${labels[*]}" "${tag_args[*]}"
       then
         # Step 4: Disable armv7
         del=(linux/arm/v7)
         # shellcheck disable=2207
         platforms=($(disable_platforms "${del[*]}" "${platforms[@]}"))
-        if ! _buildx "${platforms[*]}" "${labels[*]}" "${tags[*]}"
+        if ! _buildx "${platforms[*]}" "${labels[*]}" "${tag_args[*]}"
         then
           # Step 5: Disable aarch64
           del=(linux/arm64/v8)
           # shellcheck disable=2207
           platforms=($(disable_platforms "${del[*]}" "${platforms[@]}"))
-          _buildx "${platforms[*]}" "${labels[*]}" "${tags[*]}"
+          _buildx "${platforms[*]}" "${labels[*]}" "${tag_args[*]}"
         fi
       fi
     fi
@@ -406,12 +383,15 @@ build_project() {
   # shellcheck disable=2207
   labels=($(get_image_labels))
 
+  # shellcheck disable=2207
+  tag_args=($(get_tag_args "${images[@]}"))
+
   buildx_retry "${platforms[*]}" "${labels[*]}" "${tag_args[*]}"
 }
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]
 then
-  # set -x
+  set -x
 
   if [[ "$#" -lt 1 ]]
   then
