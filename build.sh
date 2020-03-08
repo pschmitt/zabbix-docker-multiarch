@@ -75,24 +75,22 @@ setup_buildx() {
       ;;
   esac
 
-  # GitHub Actions
-  if [[ "$GITHUB_ACTIONS" == "true" ]]
+  # CI
+  if [[ "$GITHUB_ACTIONS" == "true" ]] || [[ "$TRAVIS" == "true" ]]
   then
-    docker buildx create --use --name builder --node builder --driver docker-container
-    docker buildx inspect --bootstrap
-    docker buildx inspect
-  else
-    # Not GitHub Actions
-    if [[ "$TRAVIS" == "true" ]]
-    then
-      docker buildx create --use --name builder --node builder --driver-opt network=host
-    fi
+    docker buildx create \
+      --use \
+      --name builder \
+      --node builder \
+      --driver docker-container \
+      --driver-opt network=host
   fi
+  docker buildx inspect --bootstrap
 
   # Debug info for buildx and multiarch support
   docker version
   docker buildx ls
-  docker buildx inspect --bootstrap
+  docker buildx inspect
   ls -1 /proc/sys/fs/binfmt_misc
 }
 
@@ -129,7 +127,6 @@ array_join() {
   shift
   echo "$*"
 }
-
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]
 then
@@ -307,6 +304,7 @@ then
       $(array_join " " "${BUILD_LABELS[@]}") \
       ${TAG_ARGS[@]} .
   else
+    # TODO Detect which architectures failed and retry build without them
     # shellcheck disable=2046,2068
     if ! docker buildx build \
       --platform "$(array_join "," "${TARGET_PLATFORMS[@]}")" \
@@ -314,38 +312,49 @@ then
       $(array_join " " "${BUILD_LABELS[@]}") \
       ${TAG_ARGS[@]} .
     then
+      # Disable i386, ppc64le and s390x
       echo "Building for ${TARGET_PLATFORMS[*]} FAILED\!" >&2
-      echo "Retrying with only armv7, amd64 and aarch64" >&2
+      echo "Retrying with only armv6, armv7, aarch64 and amd64" >&2
 
       if ! docker buildx build \
-        --platform "linux/amd64,linux/arm/v7,linux/arm64/v8" \
+        --platform "linux/arm/v6,linux/arm/v7,linux/arm64/v8,linux/amd64" \
         --output "type=image,push=${PUSH_IMAGE}" \
         $(array_join " " "${BUILD_LABELS[@]}") \
         ${TAG_ARGS[@]} .
       then
-        echo "Building for armv7, aarch64 and amd64 FAILED\!" >&2
-        echo "Retrying with only amd64 and aarch64" >&2
+        # Disable armv6
+        echo "Building for armv6, armv7, aarch64 and amd64 FAILED\!" >&2
+        echo "Retrying with only armv7, aarch64 and amd64" >&2
 
         if ! docker buildx build \
-          --platform "linux/amd64,linux/arm64/v8" \
+          --platform "linux/arm/v7,linux/arm64/v8,linux/amd64" \
           --output "type=image,push=${PUSH_IMAGE}" \
           $(array_join " " "${BUILD_LABELS[@]}") \
           ${TAG_ARGS[@]} .
         then
-          echo "Building for aarch64 and amd64 FAILED\!" >&2
-          echo "Retrying with only amd64" >&2
+          # Disable armv7
+          echo "Building for armv7, aarch64 and amd64 FAILED\!" >&2
+          echo "Retrying with only aarch64 and amd64" >&2
 
-          docker buildx build \
-            --platform "linux/amd64" \
+          if ! docker buildx build \
+            --platform "linux/arm64/v8,linux/amd64" \
             --output "type=image,push=${PUSH_IMAGE}" \
             $(array_join " " "${BUILD_LABELS[@]}") \
             ${TAG_ARGS[@]} .
+          then
+            echo "Building for aarch64 and amd64 FAILED\! :facepalm:" >&2
+            echo "Retrying with only amd64" >&2
+
+            docker buildx build \
+              --platform "linux/amd64" \
+              --output "type=image,push=${PUSH_IMAGE}" \
+              $(array_join " " "${BUILD_LABELS[@]}") \
+              ${TAG_ARGS[@]} .
+          fi
         fi
       fi
     fi
   fi
-
-  # TODO Detect which architectures failed and retry build without them
 fi
 
 # vim set et ts=2 sw=2 :
