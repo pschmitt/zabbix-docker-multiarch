@@ -256,15 +256,15 @@ then
   fi
   if is_latest_patch "$GITREF"
   then
-    PATCH=$(version_major "$GITREF")
+    MINOR=$(version_minor "$GITREF")
     DOCKER_IMAGES+=(
-      "zabbixmultiarch/zabbix-${PROJECT}:${OS}-${PATCH}-latest"
-      "zabbixmultiarch/zabbix-${PROJECT}-${OS}:${PATCH}-latest"
+      "zabbixmultiarch/zabbix-${PROJECT}:${OS}-${MINOR}-latest"
+      "zabbixmultiarch/zabbix-${PROJECT}-${OS}:${MINOR}-latest"
     )
     # latest tag defaults to alpine-latest
     if [[ "$OS" == "alpine" ]]
     then
-      DOCKER_IMAGES+=("zabbixmultiarch/zabbix-${PROJECT}:${PATCH}-latest")
+      DOCKER_IMAGES+=("zabbixmultiarch/zabbix-${PROJECT}:${MINOR}-latest")
     fi
   fi
   echo "Building ${DOCKER_IMAGES[0]}"
