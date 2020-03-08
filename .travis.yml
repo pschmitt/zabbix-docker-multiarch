@@ -1,6 +1,6 @@
 arch:
+  - arm64
   - amd64
-  # - arm64
 language: minimal
 sudo: required
 services:
