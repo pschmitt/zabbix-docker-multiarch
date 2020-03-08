@@ -78,6 +78,7 @@ setup_buildx() {
   # CI
   if [[ "$GITHUB_ACTIONS" == "true" ]] || [[ "$TRAVIS" == "true" ]]
   then
+    env
     if [[ "$GITHUB_WORKFLOW" == "Self-hosted build" ]]
     then
       apt-get update
