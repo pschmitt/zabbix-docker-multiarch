@@ -6,7 +6,7 @@ on:
 
 jobs:
   local-build:
-    runs-on: nasteanas-runner
+    runs-on: self-hosted
     steps:
       - name: Checkout repo
         uses: actions/checkout@master
