@@ -12,6 +12,28 @@ is_latest_tag() {
   [[ "$(get_latest_tag)" == "$1" ]]
 }
 
+version_major() {
+  sed -rn 's/([0-9]+)\..*/\1/p' <<< "$1"
+}
+
+version_minor() {
+  sed -rn 's/([0-9]+)\.([0-9]+).*/\1\.\2/p' <<< "$1"
+}
+
+is_latest_minor() {
+  local major
+
+  major=$(version_major "$1")
+  [[ "$(git tag -l | grep '^'"${major}"'\.' | sort -n | tail -1)" == "$1" ]]
+}
+
+is_latest_patch() {
+  local minor
+
+  minor=$(version_minor "$1")
+  [[ "$(git tag -l | grep '^'"${minor}"'\.' | sort -n | tail -1)" == "$1" ]]
+}
+
 install_latest_buildx() {
   local arch
   local version=0.3.1
@@ -217,6 +239,32 @@ then
     if [[ "$OS" == "alpine" ]]
     then
       DOCKER_IMAGES+=("zabbixmultiarch/zabbix-${PROJECT}:latest")
+    fi
+  fi
+  if is_latest_minor "$GITREF"
+  then
+    MAJOR=$(version_major "$GITREF")
+    DOCKER_IMAGES+=(
+      "zabbixmultiarch/zabbix-${PROJECT}:${OS}-${MAJOR}-latest"
+      "zabbixmultiarch/zabbix-${PROJECT}-${OS}:${MAJOR}-latest"
+    )
+    # latest tag defaults to alpine-latest
+    if [[ "$OS" == "alpine" ]]
+    then
+      DOCKER_IMAGES+=("zabbixmultiarch/zabbix-${PROJECT}:${MAJOR}-latest")
+    fi
+  fi
+  if is_latest_patch "$GITREF"
+  then
+    PATCH=$(version_major "$GITREF")
+    DOCKER_IMAGES+=(
+      "zabbixmultiarch/zabbix-${PROJECT}:${OS}-${PATCH}-latest"
+      "zabbixmultiarch/zabbix-${PROJECT}-${OS}:${PATCH}-latest"
+    )
+    # latest tag defaults to alpine-latest
+    if [[ "$OS" == "alpine" ]]
+    then
+      DOCKER_IMAGES+=("zabbixmultiarch/zabbix-${PROJECT}:${PATCH}-latest")
     fi
   fi
   echo "Building ${DOCKER_IMAGES[0]}"
