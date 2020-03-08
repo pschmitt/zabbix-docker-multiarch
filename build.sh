@@ -4,12 +4,12 @@ usage() {
   echo "$(basename "$0") TARGET [GITREF] [--push]"
 }
 
-get_latest_tag() {
+get_latest_git_tag() {
   git tag -l | sort -n | tail -1
 }
 
-is_latest_tag() {
-  [[ "$(get_latest_tag)" == "$1" ]]
+is_latest_git_tag() {
+  [[ "$(get_latest_git_tag)" == "$1" ]]
 }
 
 version_major() {
@@ -20,14 +20,14 @@ version_minor() {
   sed -rn 's/([0-9]+)\.([0-9]+).*/\1\.\2/p' <<< "$1"
 }
 
-is_latest_minor() {
+is_latest_git_minor() {
   local major
 
   major=$(version_major "$1")
   [[ "$(git tag -l | grep '^'"${major}"'\.' | sort -n | tail -1)" == "$1" ]]
 }
 
-is_latest_patch() {
+is_latest_git_patch() {
   local minor
 
   minor=$(version_minor "$1")
@@ -122,31 +122,296 @@ get_available_architectures_safe() {
   fi
 }
 
+get_image_labels() {
+  local labels=("--label=built-by=pschmitt")
+  if [[ "$TRAVIS" == "true" ]]
+  then
+    labels+=("--label=build-type=travis")
+  elif [[ -n "$GITHUB_RUN_ID" ]]
+  then
+    labels+=("--label=build-type=github-actions" "--label=github-run-id=$GITHUB_RUN_ID")
+  else
+    labels+=("--label=build-type=manual" "--label=build-host=$HOSTNAME")
+  fi
+  echo "${labels[@]}"
+}
+
+get_tag_args() {
+  local images=("$@")
+  local tag_args=()
+  for img in "${images[@]}"
+  do
+    tag_args+=("--tag $img")
+  done
+  echo "${tag_args[@]}"
+}
+
+git_setup() {
+  local build_dir="$1"
+  local git_ref="$2"
+
+  if [[ -d "$build_dir" ]]
+  then
+    cd "$build_dir" || exit 9
+    git clean -d -f -f
+    git reset --hard HEAD > /dev/null
+    git checkout master > /dev/null 2>&1
+    git pull > /dev/null
+  else
+    git clone https://github.com/zabbix/zabbix-docker "$build_dir" > /dev/null
+  fi
+
+  if [[ -z "$git_ref" ]]
+  then
+    git_ref="$(get_latest_git_tag)"
+  fi
+
+  git checkout "$git_ref" > /dev/null 2>&1
+  # echo "$git_ref"
+}
+
 array_join() {
   local IFS="$1"
   shift
   echo "$*"
 }
 
-if [[ "${BASH_SOURCE[0]}" == "${0}" ]]
-then
-  set -x
+get_image_names() {
+  local org=zabbixmultiarch
+  local project_prefix=zabbix
+  local project="$1"
+  local os="$2"
+  local git_ref="$3"
+  local tag
+  local images
+
+  if [[ "$git_ref" == "master" ]]
+  then
+    tag=latest
+  else
+    tag="$git_ref"
+  fi
+
+  images=(
+    "${org}/${project_prefix}-${project}:${os}-${tag}"
+    "${org}/${project_prefix}-${project}-${os}:${tag}"
+  )
+  if is_latest_git_tag "$git_ref"
+  then
+    images+=(
+      "${org}/${project_prefix}-${project}:${os}-latest"
+      "${org}/${project_prefix}-${project}-${os}:latest"
+    )
+    # latest tag defaults to alpine-latest
+    if [[ "$os" == "alpine" ]]
+    then
+      images+=("${org}/${project_prefix}-${project}:latest")
+    fi
+  fi
+  if is_latest_git_minor "$git_ref"
+  then
+    local major
+    major=$(version_major "$git_ref")
+    images+=(
+      "${org}/${project_prefix}-${project}:${os}-${major}-latest"
+      "${org}/${project_prefix}-${project}-${os}:${major}-latest"
+    )
+    # latest tag defaults to alpine-latest
+    if [[ "$os" == "alpine" ]]
+    then
+      images+=("${org}/${project_prefix}-${project}:${major}-latest")
+    fi
+  fi
+  if is_latest_git_patch "$git_ref"
+  then
+    local minor
+    minor=$(version_minor "$git_ref")
+    images+=(
+      "${org}/${project_prefix}-${project}:${os}-${minor}-latest"
+      "${org}/${project_prefix}-${project}-${os}:${minor}-latest"
+    )
+    # latest tag defaults to alpine-latest
+    if [[ "$os" == "alpine" ]]
+    then
+      images+=("${org}/${project_prefix}-${project}:${minor}-latest")
+    fi
+  fi
+  echo "${images[@]}"
+}
+
+_buildx() {
+  # shellcheck disable=2206
+  local platforms=($1)
+  # shellcheck disable=2206
+  local labels=($2)
+  # shellcheck disable=2206
+  local tag_args=($3)
+
+  # shellcheck disable=2046,2068
+  if [[ -n "$DRYRUN" ]]
+  then
+    echo docker buildx build \
+      --platform "$(array_join "," "${platforms[@]}")" \
+      --output "type=image,push=${PUSH_IMAGE}" \
+      $(array_join " " "${labels[@]}") \
+      ${tag_args[@]} .
+  else
+    docker buildx build \
+      --platform "$(array_join "," "${platforms[@]}")" \
+      --output "type=image,push=${PUSH_IMAGE}" \
+      $(array_join " " "${labels[@]}") \
+      ${tag_args[@]} .
+  fi
+}
+
+array_pop() {
+  local val="$1"
+  shift
+  local array=("$@")
+  local new_array=()
+  local _tmp
+
+  for _tmp in "${array[@]}"
+  do
+    if [[ "$_tmp" != "$val" ]]
+    then
+      new_array+=("$_tmp")
+    fi
+  done
+  echo "${new_array[@]}"
+}
+
+disable_platforms() {
+  # shellcheck disable=2206
+  local del=($1)
+  shift
+  local platforms=("$@")
+  local new_platforms=("$@")
+
+  for item in "${del[@]}"
+  do
+    # shellcheck disable=2207
+    new_platforms=($(array_pop "$item" "${new_platforms[@]}"))
+  done
+  echo "${new_platforms[@]}"
+}
+
+buildx_without() {
+  # shellcheck disable=2206
+  local platforms=($1)
+  # shellcheck disable=2206
+  local labels=($2)
+  # shellcheck disable=2206
+  local tag_args=($3)
+  # shellcheck disable=2206
+  local del=($4)
+
+  # shellcheck disable=2207
+  local new_platforms=($(disable_platforms "${platforms[@]}"))
+  if [[ "${new_platforms[*]}" == "${platforms[*]}" ]]  # FIXME
+  then
+    return 1
+  else
+    _buildx "${new_platforms[*]}" "${labels[*]}" "${tags[*]}"
+  fi
+}
+
+buildx_retry() {
+  # shellcheck disable=2206
+  local platforms=($1)
+  # shellcheck disable=2206
+  local labels=($2)
+  # shellcheck disable=2206
+  local tags=($3)
+  local del
+
+  # shellcheck disable=2207
+  tag_args=($(get_tag_args "${images[@]}"))
+
+  # TODO Detect which architectures failed and retry build without them
+  # TODO Don't retry if disable_platforms results in the same array
+  # Step 1: all platforms
+
+  if ! _buildx "${platforms[*]}" "${labels[*]}" "${tags[*]}"
+  then
+    # Step 2: Disable i386, ppc64le and s390x
+    del=(linux/386 linux/ppc64le linux/s390x)
+    # shellcheck disable=2207
+    platforms=($(disable_platforms "${del[*]}" "${platforms[@]}"))
+    if ! _buildx "${platforms[*]}" "${labels[*]}" "${tags[*]}"
+    then
+      # Step 3: Disable armv6
+      del=(linux/arm/v6)
+      # shellcheck disable=2207
+      platforms=($(disable_platforms "${del[*]}" "${platforms[@]}"))
+      if ! _buildx "${platforms[*]}" "${labels[*]}" "${tags[*]}"
+      then
+        # Step 4: Disable armv7
+        del=(linux/arm/v7)
+        # shellcheck disable=2207
+        platforms=($(disable_platforms "${del[*]}" "${platforms[@]}"))
+        if ! _buildx "${platforms[*]}" "${labels[*]}" "${tags[*]}"
+        then
+          # Step 5: Disable aarch64
+          del=(linux/arm64/v8)
+          # shellcheck disable=2207
+          platforms=($(disable_platforms "${del[*]}" "${platforms[@]}"))
+          _buildx "${platforms[*]}" "${labels[*]}" "${tags[*]}"
+        fi
+      fi
+    fi
+  fi
+}
+
+build_project() {
+  local project="$1"
+  local os="$2"
+  local git_ref="$3"
+  local base_image
+  local base_tag
+  local images
+  local platforms
+  local labels
+  local tag_args
 
   cd "$(readlink -f "$(dirname "$0")")" || exit 9
+  local build_dir="${PWD}/data"
 
-  # buildx setup
-  export DOCKER_CLI_EXPERIMENTAL=enabled
-  export PATH="$PATH:~/.docker/cli-plugins"
-  if ! [[ -x ~/.docker/cli-plugins/docker-buildx ]]
+  git_setup "$build_dir" "$git_ref"
+  if [[ -z "$git_ref" ]]
   then
-    install_latest_buildx
-    setup_buildx
+    git_ref="$(get_latest_git_tag)"
   fi
-  if ! docker buildx version >/dev/null
+
+  if ! cd "${build_dir}/${project}/${os}" 2> /dev/null
   then
-    echo "buildx is not available" >&2
-    exit 99
+    echo "No such project/OS combination: ${project}/${os}" >&2
+    exit 4
   fi
+
+  # shellcheck disable=2207
+  images=($(get_image_names "$project" "$os" "$git_ref"))
+
+  echo "Building ${images[*]}"
+
+  read -r base_image base_tag <<< \
+    "$(sed -nr 's/^FROM\s+([^:]+):?((\w+).*)\s*$/\1 \3/p' Dockerfile | head -1)"
+
+  echo "Upstream base image: $base_image (tag: $base_tag)"
+
+  # shellcheck disable=2207
+  platforms=($(get_available_architectures "$base_image" "$base_tag"))
+
+  # Set build labels
+  # shellcheck disable=2207
+  labels=($(get_image_labels))
+
+  buildx_retry "${platforms[*]}" "${labels[*]}" "${tag_args[*]}"
+}
+
+if [[ "${BASH_SOURCE[0]}" == "${0}" ]]
+then
+  # set -x
 
   if [[ "$#" -lt 1 ]]
   then
@@ -170,7 +435,7 @@ then
       PUSH_IMAGE=true
       ;;
     *)
-      GITREF="$2"
+      GIT_REF="$2"
       case "$3" in
         -f|--force|-p|--push)
           PUSH_IMAGE=true
@@ -179,182 +444,23 @@ then
       ;;
   esac
 
+  # buildx setup
+  export DOCKER_CLI_EXPERIMENTAL=enabled
+  export PATH="${PATH}:~/.docker/cli-plugins"
+  if ! [[ -x ~/.docker/cli-plugins/docker-buildx ]]
+  then
+    install_latest_buildx
+    setup_buildx
+  fi
+  if ! docker buildx version >/dev/null
+  then
+    echo "buildx is not available" >&2
+    exit 99
+  fi
+
   read -r PROJECT OS <<< "$(sed -r 's/(.+)-(.+)/\1 \2/' <<< "$TARGET")"
 
-  if [[ -z "$PROJECT" ]] || [[ -z "$OS" ]]
-  then
-    echo "Unable to determine target project or OS" >&2
-    exit 3
-  fi
-
-  BUILD_DIR="${PWD}/data"
-
-  if [[ -d "$BUILD_DIR" ]]
-  then
-    cd "$BUILD_DIR" || exit 9
-    git clean -d -f -f
-    git reset --hard HEAD > /dev/null
-    git checkout master
-    git pull > /dev/null
-  else
-    git clone https://github.com/zabbix/zabbix-docker "$BUILD_DIR"
-  fi
-
-  cd "$BUILD_DIR" || exit 9
-
-  if [[ -z "$GITREF" ]]
-  then
-    GITREF="$(get_latest_tag)"
-  fi
-
-  git checkout "$GITREF"
-
-  if ! cd "${BUILD_DIR}/${PROJECT}/${OS}" 2> /dev/null
-  then
-    echo "No such project/OS combination: ${PROJECT} on ${OS}" >&2
-    exit 4
-  fi
-
-  if [[ "$GITREF" == "master" ]]
-  then
-    DOCKER_TAG=latest
-  else
-    DOCKER_TAG="$GITREF"
-  fi
-
-  DOCKER_IMAGES=(
-    "zabbixmultiarch/zabbix-${PROJECT}:${OS}-${DOCKER_TAG}"
-    "zabbixmultiarch/zabbix-${PROJECT}-${OS}:${DOCKER_TAG}"
-  )
-  if is_latest_tag "$GITREF"
-  then
-    DOCKER_IMAGES+=(
-      "zabbixmultiarch/zabbix-${PROJECT}:${OS}-latest"
-      "zabbixmultiarch/zabbix-${PROJECT}-${OS}:latest"
-    )
-    # latest tag defaults to alpine-latest
-    if [[ "$OS" == "alpine" ]]
-    then
-      DOCKER_IMAGES+=("zabbixmultiarch/zabbix-${PROJECT}:latest")
-    fi
-  fi
-  if is_latest_minor "$GITREF"
-  then
-    MAJOR=$(version_major "$GITREF")
-    DOCKER_IMAGES+=(
-      "zabbixmultiarch/zabbix-${PROJECT}:${OS}-${MAJOR}-latest"
-      "zabbixmultiarch/zabbix-${PROJECT}-${OS}:${MAJOR}-latest"
-    )
-    # latest tag defaults to alpine-latest
-    if [[ "$OS" == "alpine" ]]
-    then
-      DOCKER_IMAGES+=("zabbixmultiarch/zabbix-${PROJECT}:${MAJOR}-latest")
-    fi
-  fi
-  if is_latest_patch "$GITREF"
-  then
-    MINOR=$(version_minor "$GITREF")
-    DOCKER_IMAGES+=(
-      "zabbixmultiarch/zabbix-${PROJECT}:${OS}-${MINOR}-latest"
-      "zabbixmultiarch/zabbix-${PROJECT}-${OS}:${MINOR}-latest"
-    )
-    # latest tag defaults to alpine-latest
-    if [[ "$OS" == "alpine" ]]
-    then
-      DOCKER_IMAGES+=("zabbixmultiarch/zabbix-${PROJECT}:${MINOR}-latest")
-    fi
-  fi
-  echo "Building ${DOCKER_IMAGES[0]}"
-
-  TAG_ARGS=()
-  for img in "${DOCKER_IMAGES[@]}"
-  do
-    TAG_ARGS+=("--tag $img")
-  done
-
-  read -r FROM_IMAGE FROM_TAG <<< \
-    "$(sed -nr 's/^FROM\s+([^:]+):?((\w+).*)\s*$/\1 \3/p' Dockerfile | head -1)"
-
-  echo "Upstream base image: $FROM_IMAGE TAG=$FROM_TAG"
-
-  TARGET_PLATFORMS=()
-  for arch in $(get_available_architectures "$FROM_IMAGE" "$FROM_TAG")
-  do
-    TARGET_PLATFORMS+=("$arch")
-  done
-
-  # Set build labels
-  BUILD_LABELS=("--label=built-by=pschmitt")
-  if [[ "$TRAVIS" == "true" ]]
-  then
-    BUILD_LABELS+=("--label=build-type=travis")
-  elif [[ -n "$GITHUB_RUN_ID" ]]
-  then
-    BUILD_LABELS+=("--label=build-type=github-actions" "--label=github-run-id=$GITHUB_RUN_ID")
-  else
-    BUILD_LABELS+=("--label=build-type=manual" "--label=build-host=$HOSTNAME")
-  fi
-
-  if [[ -n "$DRYRUN" ]]
-  then
-    # shellcheck disable=2046,2068
-    echo docker buildx build \
-      --platform "$(array_join "," "${TARGET_PLATFORMS[@]}")" \
-      --output "type=image,push=${PUSH_IMAGE}" \
-      $(array_join " " "${BUILD_LABELS[@]}") \
-      ${TAG_ARGS[@]} .
-  else
-    # TODO Detect which architectures failed and retry build without them
-    # shellcheck disable=2046,2068
-    if ! docker buildx build \
-      --platform "$(array_join "," "${TARGET_PLATFORMS[@]}")" \
-      --output "type=image,push=${PUSH_IMAGE}" \
-      $(array_join " " "${BUILD_LABELS[@]}") \
-      ${TAG_ARGS[@]} .
-    then
-      # Disable i386, ppc64le and s390x
-      echo "Building for ${TARGET_PLATFORMS[*]} FAILED\!" >&2
-      echo "Retrying with only armv6, armv7, aarch64 and amd64" >&2
-
-      if ! docker buildx build \
-        --platform "linux/arm/v6,linux/arm/v7,linux/arm64/v8,linux/amd64" \
-        --output "type=image,push=${PUSH_IMAGE}" \
-        $(array_join " " "${BUILD_LABELS[@]}") \
-        ${TAG_ARGS[@]} .
-      then
-        # Disable armv6
-        echo "Building for armv6, armv7, aarch64 and amd64 FAILED\!" >&2
-        echo "Retrying with only armv7, aarch64 and amd64" >&2
-
-        if ! docker buildx build \
-          --platform "linux/arm/v7,linux/arm64/v8,linux/amd64" \
-          --output "type=image,push=${PUSH_IMAGE}" \
-          $(array_join " " "${BUILD_LABELS[@]}") \
-          ${TAG_ARGS[@]} .
-        then
-          # Disable armv7
-          echo "Building for armv7, aarch64 and amd64 FAILED\!" >&2
-          echo "Retrying with only aarch64 and amd64" >&2
-
-          if ! docker buildx build \
-            --platform "linux/arm64/v8,linux/amd64" \
-            --output "type=image,push=${PUSH_IMAGE}" \
-            $(array_join " " "${BUILD_LABELS[@]}") \
-            ${TAG_ARGS[@]} .
-          then
-            echo "Building for aarch64 and amd64 FAILED\! :facepalm:" >&2
-            echo "Retrying with only amd64" >&2
-
-            docker buildx build \
-              --platform "linux/amd64" \
-              --output "type=image,push=${PUSH_IMAGE}" \
-              $(array_join " " "${BUILD_LABELS[@]}") \
-              ${TAG_ARGS[@]} .
-          fi
-        fi
-      fi
-    fi
-  fi
+  build_project "$PROJECT" "$OS" "$GIT_REF"
 fi
 
 # vim set et ts=2 sw=2 :
