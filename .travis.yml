@@ -17,4 +17,3 @@ script:
   - sudo service docker restart
   - docker login -u "$DOCKER_USERNAME" -p "$DOCKER_PASSWORD"
   - ./build.sh "$TARGET" "$GIT_TAG" -p
-  - ps -aux
