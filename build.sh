@@ -78,12 +78,22 @@ setup_buildx() {
   # CI
   if [[ "$GITHUB_ACTIONS" == "true" ]] || [[ "$TRAVIS" == "true" ]]
   then
-    docker buildx create \
-      --use \
-      --name builder \
-      --node builder \
-      --driver docker-container \
-      --driver-opt network=host
+    if [[ "$GITHUB_WORKFLOW" == "Self-hosted build" ]]
+    then
+      apt-get update
+      apt-get install -y ssh
+      ssh-keyscan picopi >> ~/.ssh/known_hosts
+      docker context create picopi --docker "host=ssh://pschmitt@picopi.lan"
+      docker buildx create --use --name farm --platform linux/arm/v6,linux/arm/v7 picopi
+      docker buildx create --append --name farm default
+    else
+      docker buildx create \
+        --use \
+        --name builder \
+        --node builder \
+        --driver docker-container \
+        --driver-opt network=host
+    fi
   fi
   docker buildx inspect --bootstrap
 
