@@ -154,11 +154,12 @@ git_setup() {
   then
     cd "$build_dir" || exit 9
     git clean -d -f -f
-    git reset --hard HEAD > /dev/null
-    git checkout master > /dev/null 2>&1
-    git pull > /dev/null
+    git reset --hard HEAD
+    git checkout master
+    git pull
   else
-    git clone https://github.com/zabbix/zabbix-docker "$build_dir" > /dev/null
+    git clone https://github.com/zabbix/zabbix-docker "$build_dir"
+    cd "$build_dir" || exit 9
   fi
 
   if [[ -z "$git_ref" ]]
@@ -354,7 +355,7 @@ build_project() {
   cd "$(readlink -f "$(dirname "$0")")" || exit 9
   local build_dir="${PWD}/data"
 
-  git_setup "$build_dir" "$git_ref"
+  git_setup "$build_dir" "$git_ref" > /dev/null 2>&1
   if [[ -z "$git_ref" ]]
   then
     git_ref="$(get_latest_git_tag)"
