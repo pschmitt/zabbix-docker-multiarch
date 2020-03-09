@@ -1,5 +1,5 @@
 arch:
-  - arm64
+  # - arm64
   - amd64
 language: minimal
 sudo: required
