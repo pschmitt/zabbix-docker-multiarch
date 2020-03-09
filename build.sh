@@ -67,6 +67,14 @@ install_latest_buildx() {
   chmod +x "$buildx_path"
 }
 
+debug_info() {
+  env
+  docker version
+  docker buildx ls
+  docker buildx inspect
+  ls -1 /proc/sys/fs/binfmt_misc
+}
+
 setup_buildx() {
   case "$(uname -m)" in
     x86_64|i386)
@@ -78,7 +86,6 @@ setup_buildx() {
   # CI
   if [[ "$GITHUB_ACTIONS" == "true" ]] || [[ "$TRAVIS" == "true" ]]
   then
-    env
     if [[ "$GITHUB_WORKFLOW" == "Self-hosted build" ]]
     then
       apt-get update
@@ -99,10 +106,7 @@ setup_buildx() {
   docker buildx inspect --bootstrap
 
   # Debug info for buildx and multiarch support
-  docker version
-  docker buildx ls
-  docker buildx inspect
-  ls -1 /proc/sys/fs/binfmt_misc
+  debug_info
 }
 
 get_available_architectures() {
