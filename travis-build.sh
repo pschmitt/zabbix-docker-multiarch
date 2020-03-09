@@ -4,12 +4,16 @@ usage() {
   echo "Usage: $(basename "$0") [MAX_TAGS]"
 }
 
+DISABLED_PROJECTS=("agent2")
+
 list_targets() {
   local tmpdir
   tmpdir="$(mktemp -d)"
   git clone -q --depth 1 https://github.com/zabbix/zabbix-docker "$tmpdir"
   find "$tmpdir" -maxdepth 2 -mindepth 2 -type d | grep -v .git | \
-    sed -e "s|^${tmpdir}/||" -e 's|/|-|' | sort
+    sed -e "s|^${tmpdir}/||" -e 's|/|-|' | sort | \
+    grep -v "agent2"
+  # shellcheck disable=2064
   trap "rm -rf \"$tmpdir\"" EXIT
 }
 
