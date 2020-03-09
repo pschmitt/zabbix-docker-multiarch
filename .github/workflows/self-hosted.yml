@@ -1,4 +1,4 @@
-name: Local builds
+name: Self-hosted build
 
 on:
   push:
