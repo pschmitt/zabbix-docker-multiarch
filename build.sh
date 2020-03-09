@@ -265,12 +265,14 @@ _buildx() {
     echo docker buildx build \
       --platform "$(array_join "," "${platforms[@]}")" \
       --output "type=image,push=${PUSH_IMAGE}" \
+      --no-cache \
       $(array_join " " "${labels[@]}") \
       ${tag_args[@]} .
   else
     docker buildx build \
       --platform "$(array_join "," "${platforms[@]}")" \
       --output "type=image,push=${PUSH_IMAGE}" \
+      --no-cache \
       $(array_join " " "${labels[@]}") \
       ${tag_args[@]} .
   fi
