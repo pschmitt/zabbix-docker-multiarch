@@ -12,6 +12,10 @@ is_latest_git_tag() {
   [[ "$(get_latest_git_tag)" == "$1" ]]
 }
 
+get_current_git_commit() {
+  git log --pretty=format:'%h' -n 1
+}
+
 version_major() {
   sed -rn 's/([0-9]+)\..*/\1/p' <<< "$1"
 }
@@ -199,59 +203,63 @@ get_image_names() {
   local os="$2"
   local git_ref="$3"
   local tag
-  local images
+  local images=()
 
   if [[ "$git_ref" == "master" ]]
   then
-    tag=latest
+    tag=master
   else
     tag="$git_ref"
   fi
 
-  images=(
-    "${org}/${project_prefix}-${project}:${os}-${tag}"
-    "${org}/${project_prefix}-${project}-${os}:${tag}"
-  )
   if is_latest_git_tag "$git_ref"
   then
+    if [[ "$os" == "alpine" ]]
+    then
+      images+=("${org}/${project_prefix}-${project}:latest")
+    fi
     images+=(
       "${org}/${project_prefix}-${project}:${os}-latest"
       "${org}/${project_prefix}-${project}-${os}:latest"
     )
     # latest tag defaults to alpine-latest
-    if [[ "$os" == "alpine" ]]
-    then
-      images+=("${org}/${project_prefix}-${project}:latest")
-    fi
   fi
+
   if is_latest_git_minor "$git_ref"
   then
     local major
     major=$(version_major "$git_ref")
-    images+=(
-      "${org}/${project_prefix}-${project}:${os}-${major}-latest"
-      "${org}/${project_prefix}-${project}-${os}:${major}-latest"
-    )
     # latest tag defaults to alpine-latest
     if [[ "$os" == "alpine" ]]
     then
       images+=("${org}/${project_prefix}-${project}:${major}-latest")
     fi
+    images+=(
+      "${org}/${project_prefix}-${project}:${os}-${major}-latest"
+      "${org}/${project_prefix}-${project}-${os}:${major}-latest"
+    )
   fi
+
   if is_latest_git_patch "$git_ref"
   then
     local minor
     minor=$(version_minor "$git_ref")
-    images+=(
-      "${org}/${project_prefix}-${project}:${os}-${minor}-latest"
-      "${org}/${project_prefix}-${project}-${os}:${minor}-latest"
-    )
     # latest tag defaults to alpine-latest
     if [[ "$os" == "alpine" ]]
     then
       images+=("${org}/${project_prefix}-${project}:${minor}-latest")
     fi
+    images+=(
+      "${org}/${project_prefix}-${project}:${os}-${minor}-latest"
+      "${org}/${project_prefix}-${project}-${os}:${minor}-latest"
+    )
   fi
+
+  images+=(
+    "${org}/${project_prefix}-${project}:${os}-$(get_current_git_commit)"
+    "${org}/${project_prefix}-${project}:${os}-${tag}"
+    "${org}/${project_prefix}-${project}-${os}:${tag}"
+  )
   echo "${images[@]}"
 }
 
