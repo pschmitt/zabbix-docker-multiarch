@@ -214,6 +214,7 @@ get_image_names() {
 
   if is_latest_git_tag "$git_ref"
   then
+    # latest tag defaults to alpine-latest
     if [[ "$os" == "alpine" ]]
     then
       images+=("${org}/${project_prefix}-${project}:latest")
@@ -222,7 +223,6 @@ get_image_names() {
       "${org}/${project_prefix}-${project}:${os}-latest"
       "${org}/${project_prefix}-${project}-${os}:latest"
     )
-    # latest tag defaults to alpine-latest
   fi
 
   if is_latest_git_minor "$git_ref"
@@ -465,6 +465,12 @@ then
   fi
 
   read -r PROJECT OS <<< "$(sed -r 's/(.+)-(.+)/\1 \2/' <<< "$TARGET")"
+
+  # Default to alpine
+  if [[ -z "$OS" ]]
+  then
+    OS=alpine
+  fi
 
   build_project "$PROJECT" "$OS" "$GIT_REF"
 fi
