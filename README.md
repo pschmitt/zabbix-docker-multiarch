@@ -28,3 +28,11 @@ docker run --name some-zabbix-proxy-sqlite3 -e ZBX_HOSTNAME=some-hostname -e ZBX
 ```bash
 docker run --name some-zabbix-agent -e ZBX_HOSTNAME="some-hostname" -e ZBX_SERVER_HOST="some-zabbix-server" -d zabbixmultiarch/zabbix-agent:tag
 ```
+
+## CI
+
+All upstream projects are built using [Travis CI](https://travis-ci.com/pschmitt/zabbix-docker-multiarch) **except** zabbix-agent2 since it won't build properly with buildx and QEMU for ARM.
+
+I currently build zabbix-agent2 locally every day using an AMD64 machine and a Raspberry Pi.
+
+Sadly due to https://github.com/docker/buildx/issues/177 only the `latest` tag get published for the moment.
