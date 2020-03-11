@@ -2,6 +2,8 @@
 
 [![Build Status](https://travis-ci.com/pschmitt/zabbix-docker-multiarch.svg?branch=master)](https://travis-ci.com/pschmitt/zabbix-docker-multiarch)
 
+![GitHub Actions CI](https://github.com/pschmitt/zabbix-docker-multiarch/workflows/GitHub%20Actions%20CI/badge.svg)
+
 You can find the resulting images in the [zabbixmultiarch Docker Hub organization](https://hub.docker.com/u/zabbixmultiarch).
 
 ## Setup
@@ -31,7 +33,8 @@ docker run --name some-zabbix-agent -e ZBX_HOSTNAME="some-hostname" -e ZBX_SERVE
 
 ## CI
 
-All upstream projects are built using [Travis CI](https://travis-ci.com/pschmitt/zabbix-docker-multiarch) **except** zabbix-agent2 since it won't build properly with buildx and QEMU for ARM.
+All upstream projects are built using both [Travis CI](https://travis-ci.com/pschmitt/zabbix-docker-multiarch) and [GitHub Actions](https://github.com/pschmitt/zabbix-docker-multiarch/actions?query=workflow%3A%22GitHub+Actions+CI%22)
+**except** zabbix-agent2 since it won't build properly with buildx and QEMU for ARM.
 
 I currently build zabbix-agent2 locally every day using an AMD64 machine and a Raspberry Pi.
 
