@@ -16,6 +16,7 @@ jobs:
           - proxy-sqlite3-ubuntu
           - server-pgsql-ubuntu
           - zabbix-appliance-alpine
+          - zabbix-appliance-ubuntu
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repo
