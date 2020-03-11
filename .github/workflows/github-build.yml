@@ -7,6 +7,14 @@ on:
 
 jobs:
   buildx:
+    strategy:
+      matrix:
+        target:
+          - java-gateway-ubuntu
+          - proxy-mysql-ubuntu
+          - proxy-sqlite3-ubuntu
+          - server-pgsql-ubuntu
+          - zabbix-appliance-alpine
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repo
@@ -14,8 +22,8 @@ jobs:
         with:
           ref: ${{ github.ref }}
 
-      - name: Install latest Docker version
-        run: curl -fsSL https://get.docker.com | sh
+      - name: Install latest Docker X version
+        run: curl -fsSL https://raw.githubusercontent.com/pschmitt/ci-setup-docker-buildx/master/setup.sh | bash
 
       - name: Docker login
         uses: azure/docker-login@v1
@@ -23,7 +31,7 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
-      - name: Start GitHub Actions build of zabbix-docker-armhf
+      - name: Build target
         env:
           DOCKER_CLI_EXPERIMENTAL: enabled
-        run: ./build-all.sh
+        run: ./build.sh ${{ matrix.target }} -p
