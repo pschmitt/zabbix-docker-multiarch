@@ -262,6 +262,11 @@ buildx_retry() {
 
   if ! _buildx "${platforms[*]}" "${labels[*]}" "${tag_args[*]}"
   then
+    if [[ -n "$NO_FALLBACK" ]]
+    then
+      echo "NO_FALLBACK is set: Skip fallback mechanism."
+      return 7
+    fi
     # Step 2: Disable i386, ppc64le and s390x
     del=(linux/386 linux/ppc64le linux/s390x)
     # shellcheck disable=2207
