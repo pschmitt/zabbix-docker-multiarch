@@ -212,6 +212,19 @@ _buildx() {
       --no-cache \
       $(array_join " " "${labels[@]}") \
       ${tag_args[@]} .
+    res="$?"
+    if [[ "$res" == "0" ]]
+    then
+      echo "✔️ BUILD succeeded"
+      echo "The following architectures have been pushed:"
+      for platform in "${platforms[@]}"
+      do
+        echo "  - $platform"
+      done
+    else
+      echo "❌ BUILD FAILED" >&2
+    fi
+    return "$res"
   fi
 }
 
