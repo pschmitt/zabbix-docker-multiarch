@@ -24,9 +24,6 @@ jobs:
         with:
           ref: ${{ github.ref }}
 
-      - name: Install latest Docker X version
-        run: curl -fsSL https://raw.githubusercontent.com/pschmitt/ci-setup-docker-buildx/master/setup.sh | bash
-
       - name: Docker login
         uses: azure/docker-login@v1
         with:
@@ -36,4 +33,6 @@ jobs:
       - name: Build target ${{ matrix.target }}
         env:
           DOCKER_CLI_EXPERIMENTAL: enabled
-        run: docker buildx inspect && docker buildx ls && ./build.sh ${{ matrix.target }} -p
+        run:
+          curl -fsSL https://raw.githubusercontent.com/pschmitt/ci-setup-docker-buildx/master/setup.sh | bash
+          ./build.sh ${{ matrix.target }} -p
