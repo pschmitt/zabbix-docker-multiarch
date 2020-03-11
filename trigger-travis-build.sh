@@ -4,8 +4,6 @@ usage() {
   echo "Usage: $(basename "$0") [MAX_TAGS]"
 }
 
-DISABLED_PROJECTS=("agent2")
-
 list_targets() {
   local tmpdir
   tmpdir="$(mktemp -d)"
