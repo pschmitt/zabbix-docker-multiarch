@@ -11,11 +11,43 @@ jobs:
       fail-fast: false
       matrix:
         target:
+          # - agent2-alpine
+          - agent-alpine
+          - agent-centos
+          - agent-ubuntu
+          - java-gateway-alpine
+          - java-gateway-centos
           - java-gateway-ubuntu
+          - proxy-mysql-alpine
+          - proxy-mysql-centos
           - proxy-mysql-ubuntu
+          - proxy-sqlite3-alpine
+          - proxy-sqlite3-centos
           - proxy-sqlite3-ubuntu
+          - server-mysql-alpine
+          - server-mysql-centos
+          - server-mysql-ubuntu
+          - server-pgsql-alpine
+          - server-pgsql-centos
           - server-pgsql-ubuntu
+          - snmptraps-alpine
+          - snmptraps-centos
+          - snmptraps-ubuntu
+          - web-apache-mysql-alpine
+          - web-apache-mysql-centos
+          - web-apache-mysql-ubuntu
+          - web-apache-pgsql-alpine
+          - web-apache-pgsql-centos
+          - web-apache-pgsql-ubuntu
+          - web-nginx-mysql-alpine
+          - web-nginx-mysql-centos
+          - web-nginx-mysql-ubuntu
+          - web-nginx-pgsql-alpine
+          - web-nginx-pgsql-centos
+          - web-nginx-pgsql-ubuntu
           - zabbix-appliance-alpine
+          - zabbix-appliance-centos
+          - zabbix-appliance-rhel
           - zabbix-appliance-ubuntu
     runs-on: ubuntu-latest
     steps:
