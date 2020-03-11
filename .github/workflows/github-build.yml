@@ -36,4 +36,4 @@ jobs:
       - name: Build target ${{ matrix.target }}
         env:
           DOCKER_CLI_EXPERIMENTAL: enabled
-        run: docker buildx inspect && ./build.sh ${{ matrix.target }} -p
+        run: docker buildx inspect && docker buildx ls && ./build.sh ${{ matrix.target }} -p
