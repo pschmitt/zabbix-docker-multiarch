@@ -6,27 +6,6 @@ on:
     - cron:  '0 4 * * *'
 
 jobs:
-  buildx-agent2:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repo
-        uses: actions/checkout@master
-        with:
-          ref: ${{ github.ref }}
-
-      - name: Docker login
-        uses: azure/docker-login@v1
-        with:
-          username: ${{ secrets.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_PASSWORD }}
-
-      - name: Build agent2-alpine
-        env:
-          DOCKER_CLI_EXPERIMENTAL: enabled
-        run: |
-          curl -fsSL https://raw.githubusercontent.com/pschmitt/ci-setup-docker-buildx/master/setup.sh | bash
-          NO_FALLBACK=1 ./build.sh agent2 -p
-
   buildx:
     strategy:
       fail-fast: false
@@ -68,8 +47,8 @@ jobs:
           - web-nginx-pgsql-ubuntu
           - zabbix-appliance-alpine
           - zabbix-appliance-centos
-          - zabbix-appliance-rhel
-          - zabbix-appliance-ubuntu
+          # - zabbix-appliance-rhel
+          # - zabbix-appliance-ubuntu
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repo
