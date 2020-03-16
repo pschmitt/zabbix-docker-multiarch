@@ -2,7 +2,7 @@
 
 [![Build Status](https://travis-ci.com/pschmitt/zabbix-docker-multiarch.svg?branch=master)](https://travis-ci.com/pschmitt/zabbix-docker-multiarch)
 
-![GitHub Actions CI](https://github.com/pschmitt/zabbix-docker-multiarch/workflows/GitHub%20Actions%20CI/badge.svg)
+[![GitHub Actions CI](https://github.com/pschmitt/zabbix-docker-multiarch/workflows/GitHub%20Actions%20CI/badge.svg)](https://github.com/pschmitt/zabbix-docker-multiarch/actions?query=workflow%3A%22GitHub+Actions+CI%22)
 
 You can find the resulting images in the [zabbixmultiarch Docker Hub organization](https://hub.docker.com/u/zabbixmultiarch).
 
@@ -33,9 +33,9 @@ docker run --name some-zabbix-agent -e ZBX_HOSTNAME="some-hostname" -e ZBX_SERVE
 
 ## CI
 
-All upstream projects are built using both [Travis CI](https://travis-ci.com/pschmitt/zabbix-docker-multiarch) and [GitHub Actions](https://github.com/pschmitt/zabbix-docker-multiarch/actions?query=workflow%3A%22GitHub+Actions+CI%22)
-**except** zabbix-agent2 since [it won't build properly with buildx and QEMU for ARM](https://github.com/pschmitt/zabbix-docker-multiarch/issues/3).
+All upstream projects are built using [GitHub Actions](https://github.com/pschmitt/zabbix-docker-multiarch/actions?query=workflow%3A%22GitHub+Actions+CI%22)
+**except** zabbix-agent2 since it won't build properly with buildx and QEMU for ARM.
 
 I currently build zabbix-agent2 locally every day using an AMD64 machine and a Raspberry Pi.
 
-Sadly due to https://github.com/docker/buildx/issues/177 only the `latest` tag get published for the moment.
+Sadly due to [a bug in buildx](https://github.com/docker/buildx/issues/177) only the `latest` tag get published for the moment.
