@@ -1,7 +1,5 @@
 # Zabbix Multiarch Docker images
 
-[![Build Status](https://travis-ci.com/pschmitt/zabbix-docker-multiarch.svg?branch=master)](https://travis-ci.com/pschmitt/zabbix-docker-multiarch)
-
 [![GitHub Actions CI](https://github.com/pschmitt/zabbix-docker-multiarch/workflows/GitHub%20Actions%20CI/badge.svg)](https://github.com/pschmitt/zabbix-docker-multiarch/actions?query=workflow%3A%22GitHub+Actions+CI%22)
 
 You can find the resulting images in the [zabbixmultiarch Docker Hub organization](https://hub.docker.com/u/zabbixmultiarch).
