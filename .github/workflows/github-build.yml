@@ -45,10 +45,7 @@ jobs:
           - web-nginx-pgsql-alpine
           - web-nginx-pgsql-centos
           - web-nginx-pgsql-ubuntu
-          - zabbix-appliance-alpine
-          - zabbix-appliance-centos
           # - zabbix-appliance-rhel
-          # - zabbix-appliance-ubuntu
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repo
