@@ -1,3 +1,7 @@
+# This is now obsolete.
+
+Please use the [upstream images](https://hub.docker.com/u/zabbix) now that https://github.com/zabbix/zabbix-docker/issues/558 is done.
+
 # Zabbix Multiarch Docker images
 
 [![GitHub Actions CI](https://github.com/pschmitt/zabbix-docker-multiarch/workflows/GitHub%20Actions%20CI/badge.svg)](https://github.com/pschmitt/zabbix-docker-multiarch/actions?query=workflow%3A%22GitHub+Actions+CI%22)
